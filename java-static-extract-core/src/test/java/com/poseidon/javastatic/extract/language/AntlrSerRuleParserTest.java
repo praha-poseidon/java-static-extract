@@ -1,0 +1,293 @@
+package com.poseidon.javastatic.extract.language;
+
+import com.poseidon.javastatic.extract.rule.StaticExtractRule;
+import com.poseidon.javastatic.extract.source.JavaElementKind;
+import com.poseidon.javastatic.extract.source.TakeKind;
+import com.poseidon.javastatic.extract.trace.StaticTraceRuleSet;
+import com.poseidon.javastatic.extract.trace.TraceTargetKind;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+class AntlrSerRuleParserTest {
+
+    @Test
+    void parsesSpringMvcInboundRuleShape() {
+        String ser =
+                """
+                rule "Spring MVC HTTP Inbound"
+                endpoint HTTP inbound
+
+                find method with annotation @*Mapping
+
+                let basePath =
+                  from annotation on class @RequestMapping take attr(value)
+                  from annotation on class @RequestMapping take attr(path)
+                  default ""
+
+                let methodPath =
+                  from annotation on method @*Mapping take attr(value)
+                  from annotation on method @*Mapping take attr(path)
+                  default ""
+
+                let httpMethod =
+                  from annotation on method @*Mapping take name
+                  map {
+                    GetMapping: GET
+                    PostMapping: POST
+                    RequestMapping: GET
+                  }
+
+                build {
+                  httpMethod: httpMethod
+                  path: concat(basePath, "/", methodPath) | normalize slash
+                }
+                """;
+
+        StaticExtractRule rule = new AntlrSerRuleParser().parse(ser);
+
+        assertEquals("Spring MVC HTTP Inbound", rule.name());
+        assertEquals("HTTP", rule.endpoint().type());
+        assertEquals("inbound", rule.endpoint().direction());
+        assertNotNull(rule.find().annotation());
+        assertEquals(3, rule.lets().size());
+        assertEquals(2, rule.build().fields().size());
+    }
+
+    @Test
+    void parsesTraceExternalValueRules() {
+        String ser =
+                """
+                trace "Spring External Values"
+
+                from field
+                when annotation @Value on field
+
+                let rawValue =
+                  from annotation on field @Value take attr(value)
+
+                build {
+                  namespace: "config"
+                  lookup: rawValue | normalize placeholderLookup
+                  default: rawValue | normalize placeholderDefault
+                }
+
+                from call
+                when method Environment.getProperty
+
+                let configLookup =
+                  from argument[0] take value
+
+                build {
+                  namespace: "config"
+                  lookup: configLookup
+                }
+                """;
+
+        StaticTraceRuleSet rules = new AntlrSerRuleParser().parseTrace(ser);
+
+        assertEquals("Spring External Values", rules.name());
+        assertEquals(2, rules.externalEntries().size());
+        assertEquals(TraceTargetKind.FIELD, rules.externalEntries().get(0).target());
+        assertEquals("namespace", rules.externalEntries().get(0).build().fields().keySet().iterator().next());
+        assertEquals(TraceTargetKind.METHOD_CALL, rules.externalEntries().get(1).target());
+        assertEquals("Environment", rules.externalEntries().get(1).match().method().ownerType());
+    }
+
+    @Test
+    void parsesGeneralExtractRuleElementsAndBuildActions() {
+        String ser =
+                """
+                rule "General Elements"
+                endpoint CUSTOM outbound
+                find method Client.[load,save]
+
+                let argRaw =
+                  from argument[0] take raw
+
+                let argType =
+                  from argument[0] take type
+
+                let callOwner =
+                  from call take owner
+
+                let methodSignature =
+                  from method take signature
+
+                let classType =
+                  from class take type
+
+                let fieldName =
+                  from field take name
+
+                let parameterRaw =
+                  from parameter input take raw
+
+                let returnType =
+                  from return take type
+
+                let assignmentValue =
+                  from assignment take value
+
+                let newRaw =
+                  from new com.example.UserDto take raw
+
+                let literalValue =
+                  from literal FIXED take value
+                  default fallback
+                  map {
+                    FIXED: mapped
+                  }
+
+                build {
+                  route: argRaw | regex "(.+)" group 1 | replace "old" "new" | normalize extractPath
+                  ownerField: callOwner
+                  methodField: methodSignature
+                  className: classType | normalize kebab
+                  literalField: literalValue | map {
+                    mapped: MAPPED
+                  }
+                }
+                """;
+
+        StaticExtractRule rule = new AntlrSerRuleParser().parse(ser);
+
+        assertEquals("Client", rule.find().method().ownerType());
+        assertEquals(JavaElementKind.ARGUMENT, rule.lets().get(0).sources().get(0).element());
+        assertEquals(TakeKind.RAW, rule.lets().get(0).sources().get(0).take().kind());
+        assertEquals(JavaElementKind.CALL, rule.lets().get(2).sources().get(0).element());
+        assertEquals(TakeKind.OWNER, rule.lets().get(2).sources().get(0).take().kind());
+        assertEquals(JavaElementKind.ASSIGNMENT, rule.lets().get(8).sources().get(0).element());
+        assertEquals(5, rule.build().fields().size());
+    }
+
+    @Test
+    void parsesGeneralTraceStuckPointConditions() {
+        String ser =
+                """
+                trace "General Trace"
+
+                from parameter
+                when parameter name input
+                when parameter type String
+                when annotation @Config on parameter
+
+                let lookupValue =
+                  from annotation on parameter @Config take attr(value)
+
+                build {
+                  namespace: "config"
+                  lookup: lookupValue
+                }
+
+                from assignment
+                when assignment field baseUrl
+
+                let assignedValue =
+                  from assignment take value
+
+                build {
+                  namespace: "config"
+                  lookup: assignedValue
+                }
+
+                from method
+                when method name baseUrl
+                when annotation @Config on method
+
+                let methodLookup =
+                  from annotation on method @Config take attr(value)
+
+                build {
+                  namespace: "config"
+                  lookup: methodLookup
+                }
+
+                from call
+                when call name get
+                when call owner ConfigService
+
+                let callLookup =
+                  from argument[0] take value
+
+                build {
+                  namespace: "config"
+                  lookup: callLookup
+                }
+                """;
+
+        StaticTraceRuleSet rules = new AntlrSerRuleParser().parseTrace(ser);
+
+        assertEquals(4, rules.externalEntries().size());
+        assertEquals(TraceTargetKind.PARAMETER, rules.externalEntries().get(0).target());
+        assertEquals("input", rules.externalEntries().get(0).match().parameterName());
+        assertEquals("baseUrl", rules.externalEntries().get(1).match().assignmentField());
+        assertEquals("baseUrl", rules.externalEntries().get(2).match().methodName());
+        assertEquals("ConfigService", rules.externalEntries().get(3).match().callOwner());
+    }
+
+    @Test
+    void parsesFieldAnnotationFindRule() {
+        StaticExtractRule rule =
+                new AntlrSerRuleParser()
+                        .parse(
+                                """
+                                rule "Config Fields"
+                                endpoint CONFIG inbound
+                                find field with annotation @ConfigProperty
+
+                                let fieldName =
+                                  from field take name
+
+                                build {
+                                  field: fieldName
+                                }
+                                """);
+
+        assertEquals(JavaElementKind.FIELD, rule.find().target());
+        assertEquals("ConfigProperty", rule.find().annotation().names().get(0));
+    }
+
+    @Test
+    void parsesNamedFieldFindRule() {
+        StaticExtractRule rule =
+                new AntlrSerRuleParser()
+                        .parse(
+                                """
+                                rule "Named Field"
+                                endpoint CONFIG inbound
+                                find field baseUrl
+
+                                let value =
+                                  from field take value
+
+                                build {
+                                  value: value
+                                }
+                                """);
+
+        assertEquals(JavaElementKind.FIELD, rule.find().target());
+        assertEquals("baseUrl", rule.find().name());
+        assertEquals("value", rule.lets().get(0).name());
+    }
+
+    @Test
+    void rejectsInvalidSerSyntaxWithLocation() {
+        IllegalArgumentException error =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> new AntlrSerRuleParser().parse(
+                                """
+                                rule "Broken"
+                                endpoint CUSTOM inbound
+                                find method with
+                                build {
+                                  value: "x"
+                                }
+                                """));
+
+        assertNotNull(error.getMessage());
+    }
+}
