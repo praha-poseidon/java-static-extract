@@ -36,6 +36,7 @@ findDecl
     | FIND CLASS
     | FIND FIELD WITH ANNOTATION annotationRef
     | FIND FIELD fieldName=nameItem
+    | FIND genericFindKind=nameItem genericFindName=nameItem?
     ;
 
 letDecl
@@ -58,6 +59,7 @@ sourceExpr
     | ASSIGNMENT
     | NEW qualifiedName
     | LITERAL literal
+    | genericSourceKind=nameItem genericSourceName=nameItem?
     ;
 
 takeExpr
@@ -68,6 +70,7 @@ takeExpr
     | OWNER
     | SIGNATURE
     | ATTR LPAREN identList RPAREN
+    | genericTake=nameItem
     ;
 
 defaultLine

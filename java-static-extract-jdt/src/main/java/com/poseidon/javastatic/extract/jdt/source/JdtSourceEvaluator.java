@@ -36,6 +36,9 @@ public class JdtSourceEvaluator {
     }
 
     public List<String> evaluate(SourceSpec source, JdtEvalContext context) {
+        if (source.take() == null || source.take().kind() == null) {
+            return List.of();
+        }
         if (source.element() == JavaElementKind.ANNOTATION) {
             return annotationValues(source, context);
         }

@@ -65,6 +65,14 @@ prefer `fact`.
 
 `endpoint` 会继续兼容。新的跨语言规则建议优先使用 `fact`。
 
+SER has a shared syntax skeleton and runtime-specific vocabulary. The Java JDT
+runtime currently implements Java words such as `method`, `annotation`,
+`field`, `argument`, and `return`. The parser can also preserve future runtime
+words such as `jsx`, `prop`, `children`, or `reference`, so TypeScript/Vue
+runtimes can interpret them without changing the core syntax.
+
+SER 由统一语法骨架和 runtime 词汇组成。当前 Java JDT runtime 实现了 `method`、`annotation`、`field`、`argument`、`return` 等 Java 词汇。parser 也可以保留未来 runtime 的词汇，例如 `jsx`、`prop`、`children`、`reference`，这样 TypeScript/Vue runtime 可以在不改变 core 语法的前提下解释它们。
+
 Example fact rule:
 
 fact 规则示例：

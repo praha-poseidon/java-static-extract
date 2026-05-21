@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AntlrSerRuleParserTest {
@@ -82,6 +83,42 @@ class AntlrSerRuleParserTest {
         assertEquals("fact", rule.endpoint().direction());
         assertEquals(1, rule.lets().size());
         assertEquals(1, rule.build().fields().size());
+    }
+
+    @Test
+    void preservesRuntimeVocabularyKindsForFutureRuntimes() {
+        String ser =
+                """
+                rule "React Button Action"
+                fact ui_action
+
+                find jsx Button
+
+                let label =
+                  from children take text
+
+                let handler =
+                  from prop onClick take reference
+
+                build {
+                  label: label
+                  handler: handler
+                }
+                """;
+
+        StaticExtractRule rule = new AntlrSerRuleParser().parse(ser);
+
+        assertEquals("ui_action", rule.fact().type());
+        assertNull(rule.find().target());
+        assertEquals("jsx", rule.find().targetKind());
+        assertEquals("Button", rule.find().name());
+        assertNull(rule.lets().get(0).sources().get(0).element());
+        assertEquals("children", rule.lets().get(0).sources().get(0).elementKind());
+        assertNull(rule.lets().get(0).sources().get(0).take().kind());
+        assertEquals("text", rule.lets().get(0).sources().get(0).take().kindName());
+        assertEquals("prop", rule.lets().get(1).sources().get(0).elementKind());
+        assertEquals("onClick", rule.lets().get(1).sources().get(0).name());
+        assertEquals("reference", rule.lets().get(1).sources().get(0).take().kindName());
     }
 
     @Test

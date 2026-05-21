@@ -198,7 +198,15 @@ public class AntlrSerRuleParser implements SerRuleParser, SerTraceRuleParser {
             if (ctx.CLASS() != null) {
                 return new FindSpec(JavaElementKind.CLASS, null, null, null);
             }
-            return new FindSpec(JavaElementKind.METHOD, null, null, methodSelector(ctx.methodPattern()));
+            if (ctx.methodPattern() != null) {
+                return new FindSpec(JavaElementKind.METHOD, null, null, methodSelector(ctx.methodPattern()));
+            }
+            return new FindSpec(
+                    null,
+                    ctx.genericFindKind.getText(),
+                    ctx.genericFindName != null ? ctx.genericFindName.getText() : null,
+                    null,
+                    null);
         }
 
         private LetSpec buildLet(SerParser.LetDeclContext ctx) {
@@ -284,11 +292,24 @@ public class AntlrSerRuleParser implements SerRuleParser, SerTraceRuleParser {
                         null,
                         take);
             }
+            if (src.LITERAL() != null) {
+                return new SourceSpec(
+                        JavaElementKind.LITERAL,
+                        null,
+                        null,
+                        literal(src.literal()),
+                        null,
+                        null,
+                        null,
+                        take);
+            }
             return new SourceSpec(
-                    JavaElementKind.LITERAL,
+                    null,
+                    src.genericSourceKind.getText(),
                     null,
                     null,
-                    literal(src.literal()),
+                    src.genericSourceName != null ? src.genericSourceName.getText() : null,
+                    null,
                     null,
                     null,
                     null,
@@ -374,7 +395,10 @@ public class AntlrSerRuleParser implements SerRuleParser, SerTraceRuleParser {
             if (ctx.SIGNATURE() != null) {
                 return new TakeSpec(TakeKind.SIGNATURE, List.of());
             }
-            return new TakeSpec(TakeKind.TYPE, List.of());
+            if (ctx.TYPE() != null) {
+                return new TakeSpec(TakeKind.TYPE, List.of());
+            }
+            return new TakeSpec(null, ctx.genericTake.getText(), List.of());
         }
 
         private MethodSelector methodSelector(SerParser.MethodPatternContext ctx) {

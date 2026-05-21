@@ -59,6 +59,8 @@ com.poseidon.javastatic.extract.language
   Public SER words and parser contracts.
   Examples: rule, endpoint, find, from, on, take, build.
   Ser.g4 defines the grammar; AntlrSerRuleParser turns text into the rule model.
+  RuleVocabulary describes runtime-specific words such as Java method/field or
+  future TSX jsx/prop/children terms.
 
 com.poseidon.javastatic.extract.rule
   The complete rule shape.
