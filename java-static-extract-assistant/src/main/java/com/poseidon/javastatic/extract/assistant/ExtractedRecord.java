@@ -5,8 +5,7 @@ import java.util.Map;
 public record ExtractedRecord(
         String rule,
         String factType,
-        String endpointType,
-        String endpointDirection,
+        Map<String, String> classifiers,
         Map<String, String> fields,
         String projectFilePath,
         String absoluteFilePath,

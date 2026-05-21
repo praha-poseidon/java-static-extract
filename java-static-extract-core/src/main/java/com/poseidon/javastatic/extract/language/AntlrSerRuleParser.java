@@ -69,7 +69,17 @@ public class AntlrSerRuleParser implements SerRuleParser, SerTraceRuleParser {
             FindSpec find = buildFind(ctx.findDecl());
             List<LetSpec> lets = ctx.letDecl().stream().map(this::buildLet).toList();
             BuildSpec build = buildBuild(ctx.buildDecl());
-            return new StaticExtractRule(name, null, true, 100, target.fact(), target.endpoint(), find, lets, build);
+            return new StaticExtractRule(
+                    name,
+                    null,
+                    true,
+                    100,
+                    target.fact(),
+                    target.classifiers(),
+                    target.endpoint(),
+                    find,
+                    lets,
+                    build);
         }
 
         private RuleTarget ruleTarget(SerParser.RuleTargetDeclContext ctx) {
@@ -78,10 +88,15 @@ public class AntlrSerRuleParser implements SerRuleParser, SerTraceRuleParser {
                         new EndpointSpec(
                                 ctx.endpointDecl().valueToken(0).getText(),
                                 ctx.endpointDecl().valueToken(1).getText());
-                return new RuleTarget(endpointFact(endpoint), endpoint);
+                return new RuleTarget(
+                        endpointFact(endpoint),
+                        Map.of(
+                                "category", endpoint.type(),
+                                "direction", endpoint.direction()),
+                        endpoint);
             }
             FactSpec fact = new FactSpec(ctx.factDecl().valueToken().getText());
-            return new RuleTarget(fact, new EndpointSpec(fact.type(), "fact"));
+            return new RuleTarget(fact, Map.of(), new EndpointSpec(fact.type(), "fact"));
         }
 
         private FactSpec endpointFact(EndpointSpec endpoint) {
@@ -474,7 +489,7 @@ public class AntlrSerRuleParser implements SerRuleParser, SerTraceRuleParser {
         }
     }
 
-    private record RuleTarget(FactSpec fact, EndpointSpec endpoint) {}
+    private record RuleTarget(FactSpec fact, Map<String, String> classifiers, EndpointSpec endpoint) {}
 
     private static final class ThrowingErrorListener extends BaseErrorListener {
         private static final ThrowingErrorListener INSTANCE = new ThrowingErrorListener();

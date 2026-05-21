@@ -51,6 +51,8 @@ class AntlrSerRuleParserTest {
 
         assertEquals("Spring MVC HTTP Inbound", rule.name());
         assertEquals("http_inbound", rule.fact().type());
+        assertEquals("HTTP", rule.classifiers().get("category"));
+        assertEquals("inbound", rule.classifiers().get("direction"));
         assertEquals("HTTP", rule.endpoint().type());
         assertEquals("inbound", rule.endpoint().direction());
         assertNotNull(rule.find().annotation());
@@ -79,6 +81,7 @@ class AntlrSerRuleParserTest {
 
         assertEquals("React Button Action", rule.name());
         assertEquals("ui_action", rule.fact().type());
+        assertEquals(0, rule.classifiers().size());
         assertEquals("ui_action", rule.endpoint().type());
         assertEquals("fact", rule.endpoint().direction());
         assertEquals(1, rule.lets().size());

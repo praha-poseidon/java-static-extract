@@ -178,8 +178,7 @@ public final class JavaStaticExtractAssistant {
         return results.stream().map(result -> new ExtractedRecord(
                 result.rule().name(),
                 result.rule().fact().type(),
-                result.rule().endpoint().type(),
-                result.rule().endpoint().direction(),
+                result.rule().classifiers(),
                 result.fields(),
                 result.projectFilePath(),
                 result.absoluteFilePath(),

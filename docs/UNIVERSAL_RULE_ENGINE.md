@@ -2,9 +2,9 @@
 
 This document describes the direction for evolving Java Static Extract from a
 Java-focused static extraction engine into a universal rule engine for
-cross-language code facts and frontend-to-backend flow analysis.
+cross-language code facts.
 
-本文档描述 Java Static Extract 的演进方向：从 Java 静态提取引擎，演进为面向多语言代码事实和前后端链路分析的通用规则引擎。
+本文档描述 Java Static Extract 的演进方向：从 Java 静态提取引擎，演进为面向多语言代码事实的通用规则引擎。
 
 ## Goal
 
@@ -17,13 +17,13 @@ The goal is to provide:
 - Pluggable language vocabularies.
 - Runtime implementations for different source languages.
 - Rulesets for popular frameworks and project-specific conventions.
-- A linker that connects extracted facts across frontend and backend code.
+- A stable extracted-record envelope that keeps rule-built fields intact.
 
 - 统一的规则语言骨架。
 - 可插拔的语言词汇。
 - 面向不同源码语言的 runtime 实现。
 - 面向主流框架和项目私有约定的规则包。
-- 把前端和后端事实连接起来的 linker。
+- 稳定的提取结果外壳，同时保持规则 `build` 字段不被改写。
 
 The target shape is:
 
@@ -35,9 +35,7 @@ SER Core DSL
   -> TSX vocabulary + TypeScript runtime
   -> Vue vocabulary + Vue runtime
   -> Rulesets
-  -> Facts
-  -> Linker
-  -> Flows
+  -> Extracted records
 ```
 
 ## Core DSL
@@ -217,30 +215,33 @@ message_operation
 scheduled_job
 ```
 
-Each extracted fact should have stable metadata plus flexible fields:
+Each extracted record should have a stable envelope plus flexible `fields`.
+The `fields` object is still defined entirely by the SER `build` block.
 
-每条事实应该包含稳定元数据和灵活字段：
+每条提取结果应该包含稳定外壳和灵活的 `fields`。`fields` 仍然完全由 SER `build` 块定义。
 
 ```json
 {
+  "rule": "Axios API Call",
   "factType": "frontend_api_call",
-  "language": "typescript",
-  "framework": "axios",
-  "file": "src/pages/UserPage.tsx",
-  "startLine": 42,
-  "endLine": 42,
-  "symbol": "handleSubmit",
+  "classifiers": {},
   "fields": {
     "method": "POST",
     "path": "/api/users"
-  }
+  },
+  "projectFilePath": "src/pages/UserPage.tsx",
+  "absoluteFilePath": "/repo/src/pages/UserPage.tsx",
+  "startLine": 42,
+  "endLine": 42,
+  "enclosingMethod": "handleSubmit"
 }
 ```
 
-The current `endpoint type + direction + fields` model can remain supported for
-compatibility, but new rules should prefer `fact`.
+Older `endpoint TYPE DIRECTION` declarations are treated as a rule-header
+classification and are exposed through `classifiers`, for example
+`{"category":"HTTP","direction":"inbound"}`. New rules should prefer `fact`.
 
-当前的 `endpoint type + direction + fields` 模型可以继续兼容，但新规则应优先使用 `fact`。
+旧的 `endpoint TYPE DIRECTION` 声明会作为规则头部分类输出到 `classifiers`，例如 `{"category":"HTTP","direction":"inbound"}`。新规则应优先使用 `fact`。
 
 ## Frontend Trace
 
@@ -349,60 +350,15 @@ java-static-extract run \
   --out facts.jsonl
 ```
 
-## Linker
+## Downstream Integration
 
-The linker consumes extracted facts. It should not parse source code. Its job is
-to connect facts into flows.
+Static Extract emits extracted records. It does not build graph edges, infer
+business flows, or decide how facts should be connected. Graph platforms, RAG
+indexes, API catalogs, governance tools, or custom downstream systems can use
+`factType`, `classifiers`, `fields`, and source locations to build their own
+models.
 
-linker 消费已经提取出来的 facts，不解析源码。它负责把事实连接成链路。
-
-Target frontend-to-backend flow:
-
-目标前后端链路：
-
-```text
-ui_action
-  -> frontend_handler
-  -> frontend_api_call
-  -> backend_endpoint
-```
-
-Example flow output:
-
-链路输出示例：
-
-```json
-{
-  "factType": "ui_to_backend_flow",
-  "ui": {
-    "label": "提交",
-    "file": "src/pages/UserPage.tsx",
-    "route": "/users"
-  },
-  "frontendCall": {
-    "method": "POST",
-    "path": "/api/users"
-  },
-  "backendEndpoint": {
-    "method": "POST",
-    "path": "/api/users",
-    "handler": "UserController.create"
-  }
-}
-```
-
-Initial linker matching:
-
-初始关联规则：
-
-```text
-handler reference/name
-call containment within handler
-HTTP method
-normalized path
-base URL and proxy prefix normalization
-path variable normalization: /users/:id, /users/{id}, /users/${id}
-```
+Static Extract 输出提取结果，不负责图谱建边、业务链路推理，也不决定 facts 应该如何关联。图谱平台、RAG 索引、API 目录、治理工具或其他下游系统可以使用 `factType`、`classifiers`、`fields` 和源码位置构建自己的模型。
 
 ## Discovery
 
@@ -456,39 +412,36 @@ Suggested order:
 
 1. Add `fact` to the DSL while preserving `endpoint`.
 2. Make element kinds and take kinds runtime-extensible where practical.
-3. Define the standard fact schema and JSONL output.
+3. Define the stable extracted-record envelope and JSONL output.
 4. Add ruleset metadata and CLI loading by `--ruleset`.
 5. Build a minimal TSX runtime for React button, event handler, and axios call extraction.
-6. Build a minimal linker for `ui_action -> frontend_api_call -> backend_endpoint`.
-7. Add frontend diagnostics for unresolved label, handler, and API path values.
-8. Add discovery for frontend components, request wrappers, and i18n calls.
-9. Expand official rulesets after the fact model and runtime vocabulary stabilize.
+6. Add frontend diagnostics for unresolved label, handler, and API path values.
+7. Add discovery for frontend components, request wrappers, and i18n calls.
+8. Expand official rulesets after the record envelope and runtime vocabulary stabilize.
 
 1. 给 DSL 增加 `fact`，同时保留 `endpoint` 兼容。
 2. 在可行范围内让 element kind 和 take kind 可由 runtime 扩展。
-3. 定义标准 fact schema 和 JSONL 输出。
+3. 定义稳定的提取结果外壳和 JSONL 输出。
 4. 增加 ruleset 元数据和 CLI `--ruleset` 加载。
 5. 做最小 TSX runtime，支持 React Button、事件 handler、axios 调用提取。
-6. 做最小 linker，串起 `ui_action -> frontend_api_call -> backend_endpoint`。
-7. 增加前端诊断，解释文案、handler、API path 无法解析的原因。
-8. 增加 discovery，发现前端组件、request 封装和 i18n 调用。
-9. 等 fact model 和 runtime vocabulary 稳定后，再扩展官方 rulesets。
+6. 增加前端诊断，解释文案、handler、API path 无法解析的原因。
+7. 增加 discovery，发现前端组件、request 封装和 i18n 调用。
+8. 等提取结果外壳和 runtime vocabulary 稳定后，再扩展官方 rulesets。
 
 ## Near-Term Minimal Loop
 
-The first milestone should be a small but complete frontend-to-backend loop:
+The first milestone should be a small but complete frontend extraction loop:
 
-第一个里程碑应该是一个小而完整的前后端闭环：
+第一个里程碑应该是一个小而完整的前端提取闭环：
 
 ```text
 React TSX Button
   -> onClick handler
   -> axios/request call
-  -> Spring MVC endpoint
-  -> ui_to_backend_flow JSONL
+  -> extracted records JSONL
 ```
 
-This loop proves the product direction better than only adding more backend
-framework rules.
+This loop proves the multi-language extraction direction without moving graph
+linking or flow reasoning into this project.
 
-这个闭环比单纯增加更多后端框架规则更能证明产品方向。
+这个闭环可以证明多语言提取方向，同时不把图谱关联或链路推理放进本项目。

@@ -62,8 +62,8 @@ The CLI executes SER rules. It does not decide product scope or framework semant
 The CLI prints JSON. `run --out` writes JSON Lines. Each extracted record contains:
 
 - `rule`
-- `endpointType`
-- `endpointDirection`
+- `factType`
+- `classifiers`
 - `fields`
 - `projectFilePath`
 - `absoluteFilePath`
@@ -71,7 +71,7 @@ The CLI prints JSON. `run --out` writes JSON Lines. Each extracted record contai
 - `endLine`
 - `enclosingMethod`
 
-The `fields` object is the main product. It is defined entirely by the rule `build` block.
+The `fields` object is the main product. It is defined entirely by the rule `build` block. `classifiers` contains optional rule-header classification metadata, such as category and direction for older `endpoint` declarations.
 
 ## Final User Response
 
@@ -104,7 +104,7 @@ Use this shape:
 - 如果有动态拼接、运行时配置，结果依赖 trace 规则和 external-values。
 ```
 
-When results are many, group by `endpointType + endpointDirection`, show counts first, then list the top representative records and point to the JSONL output file.
+When results are many, group by `factType` and useful `classifiers`, show counts first, then list the top representative records and point to the JSONL output file.
 
 When no result is found, say what was checked, include the most useful diagnose facts, and suggest the next concrete rule adjustment.
 

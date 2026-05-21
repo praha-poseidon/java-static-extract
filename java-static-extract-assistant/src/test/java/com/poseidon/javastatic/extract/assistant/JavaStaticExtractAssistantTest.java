@@ -47,8 +47,8 @@ class JavaStaticExtractAssistantTest {
         assertEquals("GET", result.fields().get("httpMethod"));
         assertEquals("/api/users/{param}", result.fields().get("path"));
         assertEquals("http_inbound", result.factType());
-        assertEquals("HTTP", result.endpointType());
-        assertEquals("inbound", result.endpointDirection());
+        assertEquals("HTTP", result.classifiers().get("category"));
+        assertEquals("inbound", result.classifiers().get("direction"));
     }
 
     @Test
