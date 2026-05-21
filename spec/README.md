@@ -13,8 +13,8 @@ JSON output shape.
 - `ser/Ser.g4` defines the SER grammar used by runtime parser implementations.
 - `ser/SER_SPEC.md` defines the SER language semantics and conformance rules.
 - `cli/runtime-cli.md` defines the command shape each runtime CLI should expose.
-- `examples/` contains executable compatibility examples with rules, sources,
-  and expected JSONL output.
+- `examples/` contains executable compatibility examples grouped by runtime
+  language, with rules, sources, and expected JSONL output.
 
 ## Runtime Relationship
 

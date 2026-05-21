@@ -64,6 +64,17 @@ static-extract/rules/index.txt
 static-extract/traces/index.txt
 ```
 
+This runtime owns its Java built-in rules under:
+
+```text
+src/main/resources/static-extract/rules/
+src/main/resources/static-extract/traces/
+```
+
+`static-extract-java --builtin` loads those Java/JDT rules from the runtime
+classpath. Other runtimes should keep their own built-in rules beside their own
+runtime implementation.
+
 Entries in each index are relative paths under that directory.
 
 每个 index 里的内容都是相对当前目录的规则文件路径。

@@ -93,10 +93,12 @@ build {
     }
 
     @Test
-    void doesNotShipFrameworkRulesByDefault() {
+    void shipsJavaRuntimeRulesByDefault() {
         JavaStaticExtractRunner runner = JavaStaticExtractRunner.builder().build();
 
-        assertEquals(0, runner.rules().size());
+        assertEquals(
+                List.of("Spring MVC HTTP Inbound", "RestTemplate HTTP Outbound"),
+                runner.rules().stream().map(StaticExtractRule::name).toList());
     }
 
     @Test

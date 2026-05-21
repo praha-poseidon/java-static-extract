@@ -1,27 +1,23 @@
 # Static Extract Examples
 
-This module contains example SER rules. It is not required by
+This module contains a runnable Java example project for
 `static-extract-runtime-java-jdt`.
 
-这个模块提供示例 SER 规则。`static-extract-runtime-java-jdt` 不依赖这个模块。
+这个模块提供可运行的 Java 示例项目，用来演示 `static-extract-runtime-java-jdt`。
 
-The rules are packaged under the same classpath location that applications use:
+The Java built-in rules live in the runtime module now:
 
-示例规则放在和业务应用相同的 classpath 目录结构下：
+Java 内置规则现在放在 runtime 模块下面：
 
 ```text
-static-extract/rules/index.txt
-static-extract/rules/**/*.ser
-static-extract/traces/index.txt
-static-extract/traces/**/*.ser
+static-extract-runtime-java-jdt/src/main/resources/static-extract/rules/
+static-extract-runtime-java-jdt/src/main/resources/static-extract/traces/
 ```
 
-If this module is added to a runtime classpath, `SerRuleLoader` and
-`JavaStaticExtractRunner` can load these examples as application rules. In a
-real project, copy the rules you want into your own
-`src/main/resources/static-extract/rules/` directory and modify them there.
+When this module runs tests, it uses those runtime-owned built-in rules through
+the normal classpath loader.
 
-如果这个模块被加入运行时 classpath，`SerRuleLoader` 和 runner 就能把这些示例规则当成应用规则加载。真实项目里建议把需要的规则复制到自己项目的 `src/main/resources/static-extract/rules/` 目录下再修改。
+这个模块跑测试时，会通过正常 classpath loader 使用 runtime 自己携带的内置规则。
 
 Current examples:
 

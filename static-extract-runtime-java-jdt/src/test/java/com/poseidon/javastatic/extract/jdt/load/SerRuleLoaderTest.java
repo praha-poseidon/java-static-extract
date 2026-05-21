@@ -12,13 +12,23 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 class SerRuleLoaderTest {
 
     @Test
-    void loadAllReturnsNoRulesWhenApplicationClasspathHasNoIndex() {
+    void loadAllReturnsJavaRuntimeBuiltinRules() {
         List<StaticExtractRule> rules = new SerRuleLoader().loadAll();
 
-        assertEquals(0, rules.size());
+        assertEquals(
+                List.of("Spring MVC HTTP Inbound", "RestTemplate HTTP Outbound"),
+                rules.stream().map(StaticExtractRule::name).toList());
+    }
+
+    @Test
+    void loadsJavaRuntimeBuiltinTraceRules() {
+        List<StaticTraceRuleSet> rules = new SerRuleLoader().loadApplicationTraceRules();
+
+        assertEquals(List.of("Spring Config Trace"), rules.stream().map(StaticTraceRuleSet::name).toList());
     }
 
     @Test
@@ -35,8 +45,10 @@ class SerRuleLoaderTest {
             List<StaticExtractRule> rules = new SerRuleLoader(classLoader, new com.poseidon.javastatic.extract.language.AntlrSerRuleParser())
                     .loadApplicationRules();
 
-            assertEquals(1, rules.size());
-            assertEquals("Custom HTTP Rule", rules.get(0).name());
+            assertEquals(
+                    List.of("Custom HTTP Rule", "RestTemplate HTTP Outbound", "Spring MVC HTTP Inbound"),
+                    rules.stream().map(StaticExtractRule::name).sorted().toList());
+            assertTrue(rules.stream().anyMatch(rule -> "Custom HTTP Rule".equals(rule.name())));
         }
     }
 
@@ -50,7 +62,7 @@ class SerRuleLoaderTest {
         write(
                 tempDir.resolve("static-extract/traces/spring-config.ser"),
                 """
-                trace "Spring Config Trace"
+                trace "Custom Trace Rule"
 
                 from field
 when annotation @Value on field
@@ -70,8 +82,9 @@ build {
             List<StaticTraceRuleSet> rules = new SerRuleLoader(classLoader, new com.poseidon.javastatic.extract.language.AntlrSerRuleParser())
                     .loadApplicationTraceRules();
 
-            assertEquals(1, rules.size());
-            assertEquals("Spring Config Trace", rules.get(0).name());
+            assertEquals(
+                    List.of("Custom Trace Rule", "Spring Config Trace"),
+                    rules.stream().map(StaticTraceRuleSet::name).sorted().toList());
         }
     }
 

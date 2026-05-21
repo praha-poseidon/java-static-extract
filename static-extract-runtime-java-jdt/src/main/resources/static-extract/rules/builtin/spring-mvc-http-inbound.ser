@@ -28,3 +28,4 @@ build {
   httpMethod: httpMethod
   path: concat(basePath, methodPath) | normalize slash | normalize pathVariable
 }
+

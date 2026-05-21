@@ -1,0 +1,17 @@
+{
+  "name": "@static-extract/runtime-ts",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript runtime skeleton for Static Extract SER rules.",
+  "bin": {
+    "static-extract-ts": "./bin/static-extract-ts.mjs"
+  },
+  "scripts": {
+    "test": "node test/spec-contract.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
+
