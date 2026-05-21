@@ -11,6 +11,7 @@ JSON output shape.
 - `schema/extracted-fact.schema.json` defines the runtime output record.
 - `schema/rule-manifest.schema.json` defines a portable rule pack manifest.
 - `ser/Ser.g4` defines the SER grammar used by runtime parser implementations.
+- `ser/SER_SPEC.md` defines the SER language semantics and conformance rules.
 - `cli/runtime-cli.md` defines the command shape each runtime CLI should expose.
 
 ## Runtime Relationship
