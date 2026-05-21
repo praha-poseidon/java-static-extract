@@ -46,7 +46,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.basedir}/src/main/antlr4/com/poseidon/javastatic/extract/language/antlr</outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-ser-grammar/com/poseidon/javastatic/extract/language/antlr</outputDirectory>
               <resources>
                 <resource>
                   <directory>${project.basedir}/../spec/ser</directory>
@@ -65,6 +65,7 @@
         <artifactId>antlr4-maven-plugin</artifactId>
         <version>${antlr.version}</version>
         <configuration>
+          <sourceDirectory>${project.build.directory}/generated-ser-grammar</sourceDirectory>
           <visitor>true</visitor>
           <listener>false</listener>
         </configuration>
