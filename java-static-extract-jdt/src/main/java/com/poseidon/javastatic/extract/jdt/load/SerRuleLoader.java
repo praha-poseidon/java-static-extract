@@ -64,31 +64,35 @@ public class SerRuleLoader {
     }
 
     public List<StaticExtractRule> loadRulesFromDirectory(Path directory) {
-        return loadSerFiles(directory).stream().map(this::loadRuleFile).toList();
+        return loadSerFiles(directory).stream()
+                .flatMap(path -> loadRuleFile(path).stream())
+                .toList();
     }
 
     public List<StaticTraceRuleSet> loadTraceRulesFromDirectory(Path directory) {
-        return loadSerFiles(directory).stream().map(this::loadTraceFile).toList();
+        return loadSerFiles(directory).stream()
+                .flatMap(path -> loadTraceFile(path).stream())
+                .toList();
     }
 
     public List<StaticExtractRule> loadRulesFromFiles(List<Path> files) {
         if (files == null || files.isEmpty()) {
             return List.of();
         }
-        return files.stream().map(this::loadRuleFile).toList();
+        return files.stream().flatMap(file -> loadRuleFile(file).stream()).toList();
     }
 
     public List<StaticTraceRuleSet> loadTraceRulesFromFiles(List<Path> files) {
         if (files == null || files.isEmpty()) {
             return List.of();
         }
-        return files.stream().map(this::loadTraceFile).toList();
+        return files.stream().flatMap(file -> loadTraceFile(file).stream()).toList();
     }
 
     private List<StaticExtractRule> loadRulesFromClasspath(String base, boolean required) {
         List<StaticExtractRule> rules = new ArrayList<>();
         for (String entry : readIndexes(base, required)) {
-            rules.add(loadRuleResource(base, entry));
+            rules.addAll(loadRuleResource(base, entry));
         }
         return rules;
     }
@@ -96,48 +100,60 @@ public class SerRuleLoader {
     private List<StaticTraceRuleSet> loadTraceRulesFromClasspath(String base, boolean required) {
         List<StaticTraceRuleSet> rules = new ArrayList<>();
         for (String entry : readIndexes(base, required)) {
-            rules.add(loadTraceResource(base, entry));
+            rules.addAll(loadTraceResource(base, entry));
         }
         return rules;
     }
 
-    private StaticExtractRule loadRuleResource(String base, String relativePath) {
+    private List<StaticExtractRule> loadRuleResource(String base, String relativePath) {
         String resourcePath = base + relativePath;
         try (InputStream input = classLoader.getResourceAsStream(resourcePath)) {
             if (input == null) {
                 throw new IllegalStateException("SER rule resource not found: " + resourcePath);
             }
             String source = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-            return parser.parse(source);
+            return splitBlocks(source).stream()
+                    .filter(SerBlock::rule)
+                    .map(block -> parser.parse(block.source()))
+                    .toList();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to load SER rule: " + resourcePath, e);
         }
     }
 
-    private StaticTraceRuleSet loadTraceResource(String base, String relativePath) {
+    private List<StaticTraceRuleSet> loadTraceResource(String base, String relativePath) {
         String resourcePath = base + relativePath;
         try (InputStream input = classLoader.getResourceAsStream(resourcePath)) {
             if (input == null) {
                 throw new IllegalStateException("SER trace resource not found: " + resourcePath);
             }
             String source = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-            return traceParser.parseTrace(source);
+            return splitBlocks(source).stream()
+                    .filter(SerBlock::trace)
+                    .map(block -> traceParser.parseTrace(block.source()))
+                    .toList();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to load SER trace: " + resourcePath, e);
         }
     }
 
-    private StaticExtractRule loadRuleFile(Path file) {
+    private List<StaticExtractRule> loadRuleFile(Path file) {
         try {
-            return parser.parse(Files.readString(file, StandardCharsets.UTF_8));
+            return splitBlocks(Files.readString(file, StandardCharsets.UTF_8)).stream()
+                    .filter(SerBlock::rule)
+                    .map(block -> parser.parse(block.source()))
+                    .toList();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to load SER rule file: " + file, e);
         }
     }
 
-    private StaticTraceRuleSet loadTraceFile(Path file) {
+    private List<StaticTraceRuleSet> loadTraceFile(Path file) {
         try {
-            return traceParser.parseTrace(Files.readString(file, StandardCharsets.UTF_8));
+            return splitBlocks(Files.readString(file, StandardCharsets.UTF_8)).stream()
+                    .filter(SerBlock::trace)
+                    .map(block -> traceParser.parseTrace(block.source()))
+                    .toList();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to load SER trace file: " + file, e);
         }
@@ -192,5 +208,51 @@ public class SerRuleLoader {
             }
         }
         return lines;
+    }
+
+    private List<SerBlock> splitBlocks(String source) {
+        List<SerBlock> blocks = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        String currentKind = null;
+        for (String line : source.split("\\R", -1)) {
+            String trimmed = line.trim();
+            String kind = blockKind(trimmed);
+            if (kind != null) {
+                if (currentKind != null) {
+                    blocks.add(new SerBlock(currentKind, current.toString().strip()));
+                    current.setLength(0);
+                }
+                currentKind = kind;
+            }
+            if (currentKind != null) {
+                current.append(line).append('\n');
+            } else if (!trimmed.isBlank() && !trimmed.startsWith("#")) {
+                throw new IllegalArgumentException("SER file content must start with rule or trace.");
+            }
+        }
+        if (currentKind != null) {
+            blocks.add(new SerBlock(currentKind, current.toString().strip()));
+        }
+        return blocks;
+    }
+
+    private String blockKind(String trimmedLine) {
+        if (trimmedLine.startsWith("rule ")) {
+            return "rule";
+        }
+        if (trimmedLine.startsWith("trace ")) {
+            return "trace";
+        }
+        return null;
+    }
+
+    private record SerBlock(String kind, String source) {
+        boolean rule() {
+            return "rule".equals(kind);
+        }
+
+        boolean trace() {
+            return "trace".equals(kind);
+        }
     }
 }

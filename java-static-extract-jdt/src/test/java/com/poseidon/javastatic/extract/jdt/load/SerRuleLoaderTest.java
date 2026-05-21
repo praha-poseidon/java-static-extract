@@ -106,6 +106,36 @@ build {
     }
 
     @Test
+    void loadsRuleAndTraceBlocksFromSameSerFile(@TempDir Path tempDir) throws Exception {
+        Path file = tempDir.resolve("combined.ser");
+        write(
+                file,
+                minimalRule("Combined Rule")
+                        + "\n"
+                        + """
+                        trace "Combined Trace"
+
+                        from field
+                        when annotation @Value on field
+
+                        let rawValue =
+                          from annotation on field @Value take attr(value)
+
+                        build {
+                          namespace: "config"
+                          lookup: rawValue | normalize placeholderLookup
+                        }
+                        """);
+
+        SerRuleLoader loader = new SerRuleLoader();
+
+        assertEquals("Combined Rule", loader.loadRulesFromFiles(List.of(file)).get(0).name());
+        assertEquals("Combined Trace", loader.loadTraceRulesFromFiles(List.of(file)).get(0).name());
+        assertEquals("Combined Rule", loader.loadRulesFromDirectory(tempDir).get(0).name());
+        assertEquals("Combined Trace", loader.loadTraceRulesFromDirectory(tempDir).get(0).name());
+    }
+
+    @Test
     void rejectsInvalidDirectoriesAndMissingIndexedResources(@TempDir Path tempDir) throws Exception {
         Path notDirectory = tempDir.resolve("rules.ser");
         Files.writeString(notDirectory, minimalRule("Not Directory"));
