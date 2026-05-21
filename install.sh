@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="${JAVA_STATIC_EXTRACT_BIN_DIR:-$HOME/.local/bin}"
 INSTALL_CLI=1
 INSTALL_SKILLS=1
+MVN_CMD=""
 
 usage() {
   cat <<'USAGE'
@@ -26,6 +27,11 @@ USAGE
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --bin-dir)
+      if [[ $# -lt 2 ]]; then
+        echo "Missing value for --bin-dir" >&2
+        usage >&2
+        exit 2
+      fi
       BIN_DIR="$2"
       shift 2
       ;;
@@ -49,9 +55,56 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+detect_maven() {
+  if [[ -x "$ROOT_DIR/mvnw" ]]; then
+    MVN_CMD="$ROOT_DIR/mvnw"
+    return
+  fi
+  if command_exists mvn; then
+    MVN_CMD="mvn"
+    return
+  fi
+  die "Maven was not found. Install Maven, add it to PATH, or add a Maven wrapper as ./mvnw."
+}
+
+java_major_version() {
+  local version
+  version="$("$1" -version 2>&1 | sed -n 's/.*version "\([^"]*\)".*/\1/p' | head -n 1)"
+  if [[ -z "$version" ]]; then
+    return 1
+  fi
+  if [[ "$version" == 1.* ]]; then
+    echo "$version" | cut -d. -f2
+  else
+    echo "$version" | cut -d. -f1
+  fi
+}
+
+check_cli_prerequisites() {
+  command_exists java || die "Java was not found. Install JDK 21 and make sure java is on PATH."
+  command_exists javac || die "javac was not found. Install a full JDK 21, not only a JRE."
+  detect_maven
+
+  local major
+  major="$(java_major_version javac || true)"
+  if [[ -z "$major" || "$major" -lt 21 ]]; then
+    die "JDK 21 or newer is required. Current javac version is: $(javac -version 2>&1)"
+  fi
+}
+
 install_cli() {
+  check_cli_prerequisites
   echo "Building java-static-extract CLI..."
-  (cd "$ROOT_DIR" && mvn -pl java-static-extract-cli -am package)
+  (cd "$ROOT_DIR" && "$MVN_CMD" -pl java-static-extract-cli -am package)
 
   local source_bin="$ROOT_DIR/java-static-extract-cli/target/appassembler/bin/java-static-extract"
   if [[ ! -x "$source_bin" ]]; then
@@ -60,7 +113,11 @@ install_cli() {
   fi
 
   mkdir -p "$BIN_DIR"
-  ln -sfn "$source_bin" "$BIN_DIR/java-static-extract"
+  if ! ln -sfn "$source_bin" "$BIN_DIR/java-static-extract" 2>/dev/null; then
+    echo "Symlink failed. Copying the command script instead..."
+    cp "$source_bin" "$BIN_DIR/java-static-extract"
+    chmod +x "$BIN_DIR/java-static-extract"
+  fi
   echo "Installed command: $BIN_DIR/java-static-extract"
 }
 
@@ -69,6 +126,9 @@ install_skill_dir() {
   local source_dir="$ROOT_DIR/skills/java-static-extract"
   local target_dir="$target_root/java-static-extract"
 
+  if [[ ! -d "$source_dir" ]]; then
+    die "Skill source directory was not found: $source_dir"
+  fi
   mkdir -p "$target_root"
   rm -rf "$target_dir"
   cp -R "$source_dir" "$target_dir"

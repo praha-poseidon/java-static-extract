@@ -5,6 +5,12 @@ extracting static facts from Java source code.
 
 Java Static Extract 提供一套小型 SER 规则语言和 JDT 运行时，用来从 Java 源码中静态提取信息。
 
+It is designed for AI coding agents, code intelligence platforms, architecture
+governance, API inventory, and other automation that needs reliable Java facts
+instead of fragile text search.
+
+它面向 AI 编码 agent、代码智能平台、架构治理、接口盘点等自动化场景，目标是提供可靠的 Java 静态事实，而不是依赖脆弱的文本搜索。
+
 Current status: `0.0.1-SNAPSHOT`, alpha. The core model is usable, but SER
 syntax and Java APIs may still change before a stable release.
 
@@ -31,6 +37,24 @@ extend. Java Static Extract separates the problem into two parts:
 
 - SER 规则描述要找什么代码形态，以及最终要 build 出哪些字段。
 - JDT 运行时负责执行规则、追踪 Java 值，并返回稳定的字段 Map。
+
+## AI and Agent Use Cases
+
+AI 编码助手和代码治理 agent 通常需要先理解项目里的真实入口和依赖关系，再生成规则、文档、架构图或治理报告。直接让大模型扫描源码容易受到上下文长度、幻觉和字符串匹配误差影响。Java Static Extract 把这部分工作拆成可执行、可验证的规则：
+
+- AI agents can generate or adjust SER rules, then call the CLI to verify them
+  against real Java files.
+- AI agents can use `diagnose` to inspect source facts when a rule does not
+  match, instead of guessing from raw source text.
+- Code intelligence systems can feed extracted JSON/JSONL records into RAG,
+  knowledge graphs, API catalogs, service maps, or architecture review tools.
+- Governance workflows can keep framework-specific extraction logic in rule
+  files, so teams can review and version it like code.
+
+- AI agent 可以生成或调整 SER 规则，再调用 CLI 在真实 Java 文件上验证。
+- 当规则没有命中时，AI agent 可以用 `diagnose` 查看源码事实，而不是只靠源码文本猜测。
+- 代码智能系统可以把提取出的 JSON/JSONL 结果送入 RAG、知识图谱、API 目录、服务地图或架构评审工具。
+- 治理流程可以把框架相关的提取逻辑放在规则文件里，像代码一样评审和版本化。
 
 ## What It Can Do
 
@@ -96,12 +120,38 @@ rules by itself. An agent can inspect a project, write SER files, call `try` or
 
 CLI 是给 agent 和本地自动化用的。它本身不负责生成 SER 规则；agent 可以自己扫描项目、写 SER 文件、调用 `try` 或 `diagnose` 验证规则，再调整规则，最后调用 `run`。
 
+Typical CLI workflow:
+
+典型 CLI 使用流程：
+
+```text
+init      prepare a .ser workspace under the target Java project
+try       test one or more SER rules against selected Java files
+diagnose  inspect source facts when a rule does not match
+run       execute stable rules against the whole project and write results
+```
+
+```text
+init      在目标 Java 项目下准备 .ser 工作区
+try       用指定 Java 文件试跑一份或多份 SER 规则
+diagnose  规则没有命中时查看源码事实，辅助调整规则
+run       对完整项目执行稳定规则，并写出结果
+```
+
 The easiest local setup is:
 
 最简单的本地安装方式：
 
 ```bash
 ./install.sh
+```
+
+If the downloaded file is not executable, run it through `bash`:
+
+如果下载后脚本没有执行权限，可以直接用 `bash` 运行：
+
+```bash
+bash install.sh
 ```
 
 This builds the CLI, links `java-static-extract` into `~/.local/bin`, and installs
@@ -113,6 +163,47 @@ the agent skill into `~/.codex/skills/java-static-extract` and
 If the command is not found after installation, add `~/.local/bin` to `PATH`.
 
 如果安装后找不到命令，把 `~/.local/bin` 加到 `PATH`。
+
+Install prerequisites:
+
+安装前置条件：
+
+```text
+JDK 21 or newer
+Maven 3.8+ or a project Maven wrapper
+Network access to Maven repositories, unless dependencies are already cached
+```
+
+```text
+JDK 21 或更新版本
+Maven 3.8+，或者项目自带 Maven wrapper
+可以访问 Maven 仓库的网络，除非依赖已经在本机缓存
+```
+
+On locked-down corporate machines, common fixes are:
+
+公司电脑限制较多时，常见处理方式：
+
+```bash
+# Install only the CLI and skip agent skill installation.
+./install.sh --no-skills
+
+# Install into a writable directory when ~/.local/bin is restricted.
+./install.sh --bin-dir "$HOME/bin"
+
+# If Maven dependencies cannot be downloaded, configure the company Maven mirror
+# in ~/.m2/settings.xml, then rerun install.
+```
+
+```bash
+# 只安装 CLI，跳过 agent skill 安装。
+./install.sh --no-skills
+
+# 如果 ~/.local/bin 受限，安装到一个可写目录。
+./install.sh --bin-dir "$HOME/bin"
+
+# 如果 Maven 依赖下载失败，先在 ~/.m2/settings.xml 配置公司 Maven 镜像，再重新执行安装。
+```
 
 Manual build:
 
@@ -146,6 +237,40 @@ diagnose   Run try and return source facts when no result is emitted.
 
 run        Run rules against a project or explicit source paths.
            对整个项目或显式 source 执行规则。
+```
+
+Common options:
+
+常用参数：
+
+```text
+--project          Java project root. Common Maven and Gradle paths are inferred.
+--file             Java file used by try or diagnose. Can be repeated.
+--source           Java source directory or file used by run. Can be repeated.
+--classes          Compiled class directory. Helps JDT resolve exact types.
+--dependency       Dependency jar or directory containing jars.
+--rule             SER extract rule file. Can be repeated.
+--rules            Directory containing SER extract rules.
+--trace-rule       SER trace rule file. Can be repeated.
+--trace-rules      Directory containing SER trace rules.
+--builtin          Load classpath rules and trace rules.
+--external-values  JSON file used by trace rules to resolve external values.
+--out              JSONL output path for run.
+```
+
+```text
+--project          Java 项目根目录，会自动推断常见 Maven 和 Gradle 路径。
+--file             try 或 diagnose 使用的 Java 文件，可重复传入。
+--source           run 使用的 Java 源码目录或文件，可重复传入。
+--classes          编译后的 class 目录，帮助 JDT 解析准确类型。
+--dependency       依赖 jar，或包含 jar 的目录。
+--rule             SER 提取规则文件，可重复传入。
+--rules            包含 SER 提取规则的目录。
+--trace-rule       SER trace 规则文件，可重复传入。
+--trace-rules      包含 SER trace 规则的目录。
+--builtin          加载 classpath 中的规则和 trace 规则。
+--external-values  trace 规则解析外部值时使用的 JSON 文件。
+--out              run 命令的 JSONL 输出路径。
 ```
 
 Example:
