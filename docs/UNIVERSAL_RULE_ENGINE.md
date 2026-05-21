@@ -220,6 +220,11 @@ The `fields` object is still defined entirely by the SER `build` block.
 
 每条提取结果应该包含稳定外壳和灵活的 `fields`。`fields` 仍然完全由 SER `build` 块定义。
 
+Language runtimes should expose this shape through the core runtime contract
+instead of inventing runtime-specific output envelopes.
+
+各语言 runtime 应该通过 core 里的 runtime contract 暴露这个结构，而不是各自发明一套输出外壳。
+
 ```json
 {
   "rule": "Axios API Call",

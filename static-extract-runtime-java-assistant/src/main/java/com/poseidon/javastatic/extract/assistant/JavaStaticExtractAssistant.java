@@ -1,7 +1,6 @@
 package com.poseidon.javastatic.extract.assistant;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.poseidon.javastatic.extract.jdt.StaticExtractResult;
 import com.poseidon.javastatic.extract.jdt.load.SerRuleLoader;
 import com.poseidon.javastatic.extract.jdt.project.JavaStaticExtractProjectRunner;
 import com.poseidon.javastatic.extract.runtime.ExtractedFact;
@@ -63,14 +62,14 @@ public final class JavaStaticExtractAssistant {
                 request.externalValues());
         List<Path> files = resolveInputPaths(request.project(), request.files());
         files.forEach(builder::source);
-        List<StaticExtractResult> results = builder.build().extract();
+        List<ExtractedFact> results = builder.build().extractFacts();
         return new TryReport(
                 "OK",
                 normalizeOrNull(request.project()),
                 strings(files),
                 ruleInputs(request.ruleFiles(), request.ruleDirectories(), request.builtinRules()),
                 results.size(),
-                records(results));
+                results);
     }
 
     public DiagnosticReport diagnose(DiagnosticRequest request) {
@@ -106,7 +105,7 @@ public final class JavaStaticExtractAssistant {
                 request.traceRuleDirectories(),
                 request.builtinRules(),
                 request.externalValues());
-        List<ExtractedFact> results = records(builder.build().extract());
+        List<ExtractedFact> results = builder.build().extractFacts();
         if (request.outputFile() != null) {
             writeJsonLines(request.outputFile(), results);
         }
@@ -173,10 +172,6 @@ public final class JavaStaticExtractAssistant {
         if (!builtinRules && safeList(ruleFiles).isEmpty() && safeList(ruleDirectories).isEmpty()) {
             throw new IllegalArgumentException("Pass at least one SER rule file, rule directory, or enable builtin rules.");
         }
-    }
-
-    private List<ExtractedFact> records(List<StaticExtractResult> results) {
-        return results.stream().map(StaticExtractResult::toFact).toList();
     }
 
     private void writeJsonLines(Path outputFile, List<ExtractedFact> results) {

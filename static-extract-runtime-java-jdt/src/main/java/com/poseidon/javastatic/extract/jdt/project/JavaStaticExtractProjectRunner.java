@@ -5,6 +5,8 @@ import com.poseidon.javastatic.extract.jdt.runtime.JavaStaticExtractRunner;
 import com.poseidon.javastatic.extract.jdt.trace.external.ExternalValueResolver;
 import com.poseidon.javastatic.extract.jdt.trace.spi.JdtTraceResolver;
 import com.poseidon.javastatic.extract.rule.StaticExtractRule;
+import com.poseidon.javastatic.extract.runtime.ExtractedFact;
+import com.poseidon.javastatic.extract.runtime.StaticExtractRuntime;
 import com.poseidon.javastatic.extract.trace.StaticTraceRuleSet;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
@@ -38,7 +40,7 @@ import java.util.Set;
  * {@code dependency} are not always required, but rules that need to confirm
  * a method or field belongs to a specific Java type need them to be accurate.
  */
-public final class JavaStaticExtractProjectRunner {
+public final class JavaStaticExtractProjectRunner implements StaticExtractRuntime {
 
     private final Path project;
     private final List<Path> sources;
@@ -79,6 +81,11 @@ public final class JavaStaticExtractProjectRunner {
                     javaFile.toAbsolutePath().normalize().toString()));
         }
         return results;
+    }
+
+    @Override
+    public List<ExtractedFact> extractFacts() {
+        return extract().stream().map(StaticExtractResult::toFact).toList();
     }
 
     public List<Path> sources() {
