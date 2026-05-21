@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Build CLI
+        run: mvn -B -pl java-static-extract-cli -am package
+
+      - name: Package CLI distribution
+        run: |
+          mkdir -p target/release/java-static-extract-cli
+          cp -R java-static-extract-cli/target/appassembler/bin target/release/java-static-extract-cli/
+          cp -R java-static-extract-cli/target/appassembler/repo target/release/java-static-extract-cli/
+          cp README.md LICENSE target/release/java-static-extract-cli/
+          chmod +x target/release/java-static-extract-cli/bin/java-static-extract
+          cd target/release
+          zip -r java-static-extract-cli.zip java-static-extract-cli
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: java-static-extract-cli
+          path: target/release/java-static-extract-cli.zip
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: target/release/java-static-extract-cli.zip

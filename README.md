@@ -138,9 +138,26 @@ diagnose  规则没有命中时查看源码事实，辅助调整规则
 run       对完整项目执行稳定规则，并写出结果
 ```
 
-The easiest local setup is:
+Recommended install for normal users:
 
-最简单的本地安装方式：
+普通用户推荐安装方式：
+
+```bash
+curl -L -o java-static-extract-cli.zip \
+  https://github.com/praha-poseidon/java-static-extract/releases/latest/download/java-static-extract-cli.zip
+unzip java-static-extract-cli.zip
+export PATH="$PWD/java-static-extract-cli/bin:$PATH"
+java-static-extract --help
+```
+
+The release package contains the CLI scripts and dependency jars. It does not
+need Maven on the target machine. It only needs JDK 21 or newer.
+
+release 包已经包含 CLI 脚本和依赖 jar，目标机器不需要安装 Maven，只需要 JDK 21 或更新版本。
+
+Source install for contributors:
+
+贡献者源码安装方式：
 
 ```bash
 ./install.sh
@@ -154,19 +171,19 @@ If the downloaded file is not executable, run it through `bash`:
 bash install.sh
 ```
 
-This builds the CLI, links `java-static-extract` into `~/.local/bin`, and installs
-the agent skill into `~/.codex/skills/java-static-extract` and
-`~/.claude/skills/java-static-extract`.
+This builds the CLI from source, links `java-static-extract` into
+`~/.local/bin`, and installs the agent skill into
+`~/.codex/skills/java-static-extract` and `~/.claude/skills/java-static-extract`.
 
-它会构建 CLI，把 `java-static-extract` 命令链接到 `~/.local/bin`，并把 agent skill 安装到 `~/.codex/skills/java-static-extract` 和 `~/.claude/skills/java-static-extract`。
+它会从源码构建 CLI，把 `java-static-extract` 命令链接到 `~/.local/bin`，并把 agent skill 安装到 `~/.codex/skills/java-static-extract` 和 `~/.claude/skills/java-static-extract`。
 
 If the command is not found after installation, add `~/.local/bin` to `PATH`.
 
 如果安装后找不到命令，把 `~/.local/bin` 加到 `PATH`。
 
-Install prerequisites:
+Source install prerequisites:
 
-安装前置条件：
+源码安装前置条件：
 
 ```text
 JDK 21 or newer
