@@ -12,6 +12,7 @@ public final class SerOperators {
 
     public static final String RULE = "rule";
     public static final String ENDPOINT = "endpoint";
+    public static final String FACT = "fact";
     public static final String FIND = "find";
     public static final String WITH = "with";
     public static final String LET = "let";

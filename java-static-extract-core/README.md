@@ -7,10 +7,11 @@ The rule authoring model is intentionally small:
 
 ```text
 rule      metadata
+fact      standard fact type for cross-language outputs
 endpoint  endpoint type and direction
 find      locate a Java code position
 let       extract named values from nearby code elements
-build     assemble endpoint fields from those values
+build     assemble output fields from those values
 ```
 
 ## Core Idea
@@ -19,7 +20,7 @@ Rules should read like a description of code:
 
 ```ser
 rule "Spring MVC HTTP Inbound"
-endpoint HTTP inbound
+fact backend_endpoint
 
 find method with annotation @*Mapping
 
@@ -81,6 +82,8 @@ com.poseidon.javastatic.extract.runtime
 ## Operators
 
 - `rule`: names a rule.
+- `fact`: declares a standard fact type, for example `backend_endpoint`,
+  `frontend_api_call`, `ui_action`, or `config_key`.
 - `endpoint`: declares the endpoint kind, for example `HTTP inbound`.
 - `endpoint`: declares endpoint labels such as `HTTP inbound`, `MQ outbound`,
   or any custom pair. The extract layer does not validate these labels.

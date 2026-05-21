@@ -49,11 +49,39 @@ class AntlrSerRuleParserTest {
         StaticExtractRule rule = new AntlrSerRuleParser().parse(ser);
 
         assertEquals("Spring MVC HTTP Inbound", rule.name());
+        assertEquals("http_inbound", rule.fact().type());
         assertEquals("HTTP", rule.endpoint().type());
         assertEquals("inbound", rule.endpoint().direction());
         assertNotNull(rule.find().annotation());
         assertEquals(3, rule.lets().size());
         assertEquals(2, rule.build().fields().size());
+    }
+
+    @Test
+    void parsesFactRuleShapeAndKeepsEndpointCompatibility() {
+        String ser =
+                """
+                rule "React Button Action"
+                fact ui_action
+
+                find method with annotation @Action
+
+                let label =
+                  from annotation on method @Action take attr(label)
+
+                build {
+                  label: label
+                }
+                """;
+
+        StaticExtractRule rule = new AntlrSerRuleParser().parse(ser);
+
+        assertEquals("React Button Action", rule.name());
+        assertEquals("ui_action", rule.fact().type());
+        assertEquals("ui_action", rule.endpoint().type());
+        assertEquals("fact", rule.endpoint().direction());
+        assertEquals(1, rule.lets().size());
+        assertEquals(1, rule.build().fields().size());
     }
 
     @Test

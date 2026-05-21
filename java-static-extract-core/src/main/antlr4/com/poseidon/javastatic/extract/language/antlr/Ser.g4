@@ -1,7 +1,7 @@
 grammar Ser;
 
 ruleFile
-    : ruleDecl endpointDecl findDecl letDecl* buildDecl EOF
+    : ruleDecl ruleTargetDecl findDecl letDecl* buildDecl EOF
     ;
 
 traceFile
@@ -18,6 +18,15 @@ traceDecl
 
 endpointDecl
     : ENDPOINT valueToken valueToken
+    ;
+
+factDecl
+    : FACT valueToken
+    ;
+
+ruleTargetDecl
+    : endpointDecl
+    | factDecl
     ;
 
 findDecl
@@ -192,6 +201,7 @@ valueToken
 RULE: 'rule';
 TRACE: 'trace';
 ENDPOINT: 'endpoint';
+FACT: 'fact';
 FIND: 'find';
 WITH: 'with';
 LET: 'let';

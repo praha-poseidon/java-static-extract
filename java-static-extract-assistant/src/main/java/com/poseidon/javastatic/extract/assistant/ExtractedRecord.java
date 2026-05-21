@@ -4,6 +4,7 @@ import java.util.Map;
 
 public record ExtractedRecord(
         String rule,
+        String factType,
         String endpointType,
         String endpointDirection,
         Map<String, String> fields,

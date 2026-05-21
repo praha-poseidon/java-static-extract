@@ -46,6 +46,7 @@ class JavaStaticExtractAssistantTest {
         ExtractedRecord result = report.results().getFirst();
         assertEquals("GET", result.fields().get("httpMethod"));
         assertEquals("/api/users/{param}", result.fields().get("path"));
+        assertEquals("http_inbound", result.factType());
         assertEquals("HTTP", result.endpointType());
         assertEquals("inbound", result.endpointDirection());
     }

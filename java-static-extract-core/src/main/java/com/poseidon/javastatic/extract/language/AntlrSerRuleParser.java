@@ -9,6 +9,7 @@ import com.poseidon.javastatic.extract.language.antlr.SerBaseVisitor;
 import com.poseidon.javastatic.extract.language.antlr.SerLexer;
 import com.poseidon.javastatic.extract.language.antlr.SerParser;
 import com.poseidon.javastatic.extract.rule.EndpointSpec;
+import com.poseidon.javastatic.extract.rule.FactSpec;
 import com.poseidon.javastatic.extract.rule.FindSpec;
 import com.poseidon.javastatic.extract.rule.StaticExtractRule;
 import com.poseidon.javastatic.extract.source.AnnotationSelector;
@@ -64,14 +65,30 @@ public class AntlrSerRuleParser implements SerRuleParser, SerTraceRuleParser {
         @Override
         public StaticExtractRule visitRuleFile(SerParser.RuleFileContext ctx) {
             String name = unquote(ctx.ruleDecl().STRING().getText());
-            EndpointSpec endpoint =
-                    new EndpointSpec(
-                            ctx.endpointDecl().valueToken(0).getText(),
-                            ctx.endpointDecl().valueToken(1).getText());
+            RuleTarget target = ruleTarget(ctx.ruleTargetDecl());
             FindSpec find = buildFind(ctx.findDecl());
             List<LetSpec> lets = ctx.letDecl().stream().map(this::buildLet).toList();
             BuildSpec build = buildBuild(ctx.buildDecl());
-            return new StaticExtractRule(name, null, true, 100, endpoint, find, lets, build);
+            return new StaticExtractRule(name, null, true, 100, target.fact(), target.endpoint(), find, lets, build);
+        }
+
+        private RuleTarget ruleTarget(SerParser.RuleTargetDeclContext ctx) {
+            if (ctx.endpointDecl() != null) {
+                EndpointSpec endpoint =
+                        new EndpointSpec(
+                                ctx.endpointDecl().valueToken(0).getText(),
+                                ctx.endpointDecl().valueToken(1).getText());
+                return new RuleTarget(endpointFact(endpoint), endpoint);
+            }
+            FactSpec fact = new FactSpec(ctx.factDecl().valueToken().getText());
+            return new RuleTarget(fact, new EndpointSpec(fact.type(), "fact"));
+        }
+
+        private FactSpec endpointFact(EndpointSpec endpoint) {
+            return new FactSpec(
+                    endpoint.type().toLowerCase(Locale.ROOT)
+                            + "_"
+                            + endpoint.direction().toLowerCase(Locale.ROOT));
         }
 
         @Override
@@ -432,6 +449,8 @@ public class AntlrSerRuleParser implements SerRuleParser, SerTraceRuleParser {
             return body.replace("\\\"", "\"").replace("\\\\", "\\");
         }
     }
+
+    private record RuleTarget(FactSpec fact, EndpointSpec endpoint) {}
 
     private static final class ThrowingErrorListener extends BaseErrorListener {
         private static final ThrowingErrorListener INSTANCE = new ThrowingErrorListener();

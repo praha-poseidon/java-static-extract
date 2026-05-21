@@ -10,6 +10,7 @@ public record StaticExtractRule(
         String description,
         Boolean enabled,
         Integer priority,
+        FactSpec fact,
         EndpointSpec endpoint,
         FindSpec find,
         List<LetSpec> lets,

@@ -47,6 +47,11 @@ build {
 
 `rule` 只是规则名称，方便诊断和识别。
 
+`fact` declares the standard fact type emitted by a rule, such as
+`backend_endpoint`, `frontend_api_call`, `ui_action`, or `config_key`.
+
+`fact` 声明规则输出的标准事实类型，例如 `backend_endpoint`、`frontend_api_call`、`ui_action` 或 `config_key`。
+
 `endpoint` is two user-defined labels.
 
 `endpoint` 是两个用户自定义标签。
@@ -54,6 +59,29 @@ build {
 The extract layer does not validate labels like `HTTP`, `CONFIG`, `inbound`, or `outbound`.
 
 提取层不校验 `HTTP`、`CONFIG`、`inbound`、`outbound` 这些标签。
+
+`endpoint` remains supported for compatibility. New cross-language rules should
+prefer `fact`.
+
+`endpoint` 会继续兼容。新的跨语言规则建议优先使用 `fact`。
+
+Example fact rule:
+
+fact 规则示例：
+
+```ser
+rule "Config Field"
+fact config_key
+
+find field with annotation @ConfigProperty
+
+let fieldName =
+  from field take name
+
+build {
+  key: fieldName | normalize kebab
+}
+```
 
 `find` locates the Java node that anchors this rule.
 
@@ -425,4 +453,3 @@ build {
   value: value
 }
 ```
-
