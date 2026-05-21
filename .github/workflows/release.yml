@@ -28,6 +28,7 @@ jobs:
           mkdir -p target/release/static-extract-java
           cp -R static-extract-runtime-java-cli/target/appassembler/bin target/release/static-extract-java/
           cp -R static-extract-runtime-java-cli/target/appassembler/repo target/release/static-extract-java/
+          cp -R spec target/release/static-extract-java/
           cp README.md LICENSE target/release/static-extract-java/
           chmod +x target/release/static-extract-java/bin/static-extract-java
           cd target/release

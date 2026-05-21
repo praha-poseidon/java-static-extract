@@ -30,7 +30,7 @@ The target shape is:
 目标结构：
 
 ```text
-SER Core DSL
+SER Spec
   -> Java vocabulary + JDT runtime
   -> TSX vocabulary + TypeScript runtime
   -> Vue vocabulary + Vue runtime
@@ -38,16 +38,17 @@ SER Core DSL
   -> Extracted records
 ```
 
-## Core DSL
+## SER Spec
 
-The core DSL should stay small and language-neutral. It should describe rule
-structure, value extraction, tracing, and output assembly.
+The SER spec should stay small and language-neutral. It should describe rule
+structure, value extraction, tracing, output assembly, CLI shape, and JSON
+output shape.
 
-核心 DSL 应该保持小而中立。它只描述规则结构、取值、追踪和输出组装。
+SER spec 应该保持小而中立。它只描述规则结构、取值、追踪、输出组装、CLI 形态和 JSON 输出形态。
 
-Core syntax:
+Spec syntax:
 
-核心语法：
+规范语法：
 
 ```text
 rule
@@ -64,11 +65,11 @@ build
 normalize
 ```
 
-The core parser should understand the shape of a rule. It should not need to
-know every source-language element such as Java annotations, JSX props, or Vue
-slots.
+A runtime parser should understand the shared rule shape and preserve
+runtime-specific vocabulary. It should not need to know every source-language
+element globally.
 
-core parser 只需要理解规则结构，不应该知道所有源码语言元素，比如 Java annotation、JSX prop 或 Vue slot。
+runtime parser 只需要理解共享规则结构并保留 runtime 专属词汇，不应该全局知道所有源码语言元素，比如 Java annotation、JSX prop 或 Vue slot。
 
 ## Vocabulary
 
@@ -140,10 +141,10 @@ build {
 ```
 
 In these examples, `rule`, `fact`, `find`, `let`, `from`, `take`, and `build`
-belong to the core DSL. `method`, `annotation`, `jsx`, `children`, and `prop`
+belong to the SER spec. `method`, `annotation`, `jsx`, `children`, and `prop`
 belong to runtime vocabularies.
 
-在这些示例中，`rule`、`fact`、`find`、`let`、`from`、`take`、`build` 属于 core DSL；`method`、`annotation`、`jsx`、`children`、`prop` 属于 runtime 词汇。
+在这些示例中，`rule`、`fact`、`find`、`let`、`from`、`take`、`build` 属于 SER spec；`method`、`annotation`、`jsx`、`children`、`prop` 属于 runtime 词汇。
 
 ## Runtime
 
@@ -159,10 +160,10 @@ Initial runtime targets:
 static-extract-runtime-java-jdt
   Java source through Eclipse JDT.
 
-typescript-static-extract
+static-extract-runtime-ts
   TypeScript and TSX through the TypeScript compiler API or ts-morph.
 
-vue-static-extract
+static-extract-runtime-vue
   Vue single-file components through a Vue parser plus TypeScript support.
 ```
 
@@ -184,11 +185,11 @@ runtime 职责：
 - 在 `take value` 或等价语义取值时追踪值。
 - 当规则无法执行时返回诊断信息。
 
-The core module should not hard-code every runtime kind. It should preserve
-unknown kinds as strings or structured selectors and let the selected runtime
-validate them.
+The language-neutral `spec/` should not contain Java classes or runtime code.
+Each runtime implements the spec in its own language and validates its own
+vocabulary.
 
-core 模块不应该写死所有 runtime 类型。它应该把未知 kind 保留为字符串或结构化 selector，由选中的 runtime 校验。
+语言无关的 `spec/` 不应该包含 Java class 或 runtime 代码。每个 runtime 用自己的语言实现 spec，并校验自己的词汇。
 
 ## Facts
 
@@ -220,10 +221,10 @@ The `fields` object is still defined entirely by the SER `build` block.
 
 每条提取结果应该包含稳定外壳和灵活的 `fields`。`fields` 仍然完全由 SER `build` 块定义。
 
-Language runtimes should expose this shape through the core runtime contract
-instead of inventing runtime-specific output envelopes.
+Language runtimes should expose this shape through the spec contract instead of
+inventing runtime-specific output envelopes.
 
-各语言 runtime 应该通过 core 里的 runtime contract 暴露这个结构，而不是各自发明一套输出外壳。
+各语言 runtime 应该通过 spec contract 暴露这个结构，而不是各自发明一套输出外壳。
 
 ```json
 {

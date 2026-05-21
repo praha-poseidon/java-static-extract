@@ -19,7 +19,7 @@
   <dependencies>
     <dependency>
       <groupId>com.poseidon</groupId>
-      <artifactId>static-extract-core</artifactId>
+      <artifactId>static-extract-core-java</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

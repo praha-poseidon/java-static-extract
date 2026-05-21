@@ -1,7 +1,11 @@
-# Static Extract Rule Language
+# Static Extract Java Core
 
-This module defines the user-facing rule language and the execution model for
-extracting static facts from Java code elements.
+This module is the Java implementation of the Static Extract SER parser, rule
+model, and Java runtime contracts.
+
+It is not the cross-language core. Cross-language contracts live in `../spec`.
+Future non-Java runtimes should implement `spec/` directly in their own
+language instead of depending on this jar.
 
 The rule authoring model is intentionally small:
 
@@ -77,8 +81,8 @@ com.poseidon.javastatic.extract.build
   regex, replace, normalize, upper, lower, and map.
 
 com.poseidon.javastatic.extract.runtime
-  Runtime-neutral execution contracts. Concrete engines such as JDT should
-  implement these contracts without exposing AST terms to rule authors.
+  Java API contracts mirroring the language-neutral spec. Java runtimes such as
+  JDT implement these contracts without exposing AST terms to rule authors.
 ```
 
 ## Operators

@@ -83,7 +83,7 @@
   </dependencyManagement>
 
   <modules>
-    <module>static-extract-core</module>
+    <module>static-extract-core-java</module>
     <module>static-extract-runtime-java-jdt</module>
     <module>static-extract-runtime-java-assistant</module>
     <module>static-extract-runtime-java-cli</module>
