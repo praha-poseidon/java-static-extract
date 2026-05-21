@@ -4,9 +4,7 @@
   "runtime": "ts",
   "version": "0.0.1",
   "rules": [
-    "vue/vue-button-text.ser",
     "react/react-button-text.ser"
   ],
   "traceRules": []
 }
-

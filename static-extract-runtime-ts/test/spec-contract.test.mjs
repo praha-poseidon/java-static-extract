@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,12 +9,12 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repo = resolve(root, "..");
 
 assert.ok(existsSync(resolve(repo, "spec/ser/Ser.g4")));
-assert.ok(existsSync(resolve(repo, "spec/schema/extracted-fact.schema.json")));
+const schemaFile = resolve(repo, "spec/schema/extracted-fact.schema.json");
+assert.ok(existsSync(schemaFile));
 
 const manifest = JSON.parse(readFileSync(resolve(root, "rules/manifest.json"), "utf8"));
 assert.equal(manifest.runtime, "ts");
 assert.deepEqual(manifest.rules, [
-  "vue/vue-button-text.ser",
   "react/react-button-text.ser"
 ]);
 for (const rule of manifest.rules) {
@@ -25,3 +26,69 @@ const help = execFileSync("node", [resolve(root, "bin/static-extract-ts.mjs"), "
 });
 assert.match(help, /Usage: static-extract-ts/);
 
+const example = resolve(repo, "spec/examples/ts/react-button-text");
+const output = resolve(mkdtempSync(resolve(tmpdir(), "static-extract-ts-")), "facts.jsonl");
+const report = execFileSync("node", [
+  resolve(root, "bin/static-extract-ts.mjs"),
+  "run",
+  "--project", example,
+  "--source", resolve(example, "input"),
+  "--rule", resolve(example, "rule.ser"),
+  "--out", output
+], { encoding: "utf8" });
+assert.match(report, /"resultCount": 2/);
+
+const actualLines = readFileSync(output, "utf8").trim().split("\n").map((line) => JSON.parse(line));
+const expectedLines = readFileSync(resolve(example, "expected.jsonl"), "utf8")
+  .trim()
+  .split("\n")
+  .map((line) => JSON.parse(line.replaceAll("${EXAMPLE_DIR}", example)));
+const schema = JSON.parse(readFileSync(schemaFile, "utf8"));
+for (const record of actualLines) {
+  assertExtractedFactShape(record, schema);
+}
+assert.deepEqual(actualLines, expectedLines);
+
+const builtinReport = execFileSync("node", [
+  resolve(root, "bin/static-extract-ts.mjs"),
+  "run",
+  "--project", example,
+  "--source", resolve(example, "input"),
+  "--builtin"
+], { encoding: "utf8" });
+assert.match(builtinReport, /"resultCount": 2/);
+
+function assertExtractedFactShape(record, schema) {
+  assert.equal(typeof record, "object");
+  assert.notEqual(record, null);
+  for (const name of schema.required) {
+    assert.ok(Object.hasOwn(record, name), `Missing field: ${name}`);
+  }
+  for (const name of Object.keys(record)) {
+    assert.ok(Object.hasOwn(schema.properties, name), `Unexpected field: ${name}`);
+    assertMatchesType(record[name], schema.properties[name].type, name);
+  }
+}
+
+function assertMatchesType(value, typeSpec, name) {
+  const allowed = Array.isArray(typeSpec) ? typeSpec : [typeSpec];
+  assert.ok(
+    allowed.some((type) => matchesType(value, type)),
+    `Field ${name} does not match schema type ${JSON.stringify(typeSpec)}`
+  );
+}
+
+function matchesType(value, type) {
+  switch (type) {
+    case "string":
+      return typeof value === "string";
+    case "integer":
+      return Number.isInteger(value);
+    case "object":
+      return typeof value === "object" && value !== null && !Array.isArray(value);
+    case "null":
+      return value === null;
+    default:
+      return false;
+  }
+}
