@@ -8,10 +8,9 @@
     "static-extract-ts": "./bin/static-extract-ts.mjs"
   },
   "scripts": {
-    "test": "node test/spec-contract.test.mjs"
+    "test": "node test/spec-contract.test.mjs && node test/e2e-ser-authoring.test.mjs"
   },
   "engines": {
     "node": ">=20"
   }
 }
-
