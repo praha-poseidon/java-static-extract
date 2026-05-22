@@ -28,7 +28,7 @@ jobs:
         run: mvn -B test
 
       - name: Test TS runtime
-        run: npm test
+        run: npm ci && npm test
         working-directory: static-extract-runtime-ts
 
       - name: Package release distribution

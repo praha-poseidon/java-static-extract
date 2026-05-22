@@ -1,70 +1,60 @@
 # Static Extract TypeScript Runtime Vocabulary
 
-This file defines the SER vocabulary currently implemented by the TypeScript
-runtime. SER authoring tools and Skills must stay within this vocabulary unless
-they also update the runtime.
+This runtime is implemented on top of `ts-morph` and the TypeScript AST. SER
+selectors map to AST shapes instead of framework-specific branches.
 
-## React
+## Supported Find Selectors
 
-Supported find selectors:
+```ser
+find jsx <tagName>
+find call <callee>
+find function <name>
+find variable <name>
+```
+
+Examples:
 
 ```ser
 find jsx button
+find jsx ActionButton
 find call fetch
-find call axios
+find call axios.post
+find call request
+find function handleSave
+find variable API_PATH
 ```
 
-Supported source expressions:
+## Supported Sources
 
 ```ser
-from jsx button take text
-from prop onClick take reference
-from call take method
+from children take text
+from jsx <tagName> take text
+from prop <name> take value
+from prop <name> take reference
+from prop <name> take raw
+from argument[0] take value
+from argument[0] take raw
 from call take name
 from call take owner
-from argument[0] take value
+from call take method
+from call take raw
+from return take value
+from return take raw
+from variable take name
+from variable take value
+from variable take raw
 ```
 
-Current behavior:
+## Value Tracing
 
-- Scans `.tsx` and `.jsx` files.
-- Matches `<button>...</button>`.
-- Extracts literal text, for example `<button>Save</button>` -> `Save`.
-- Extracts simple expression text as a symbolic label, for example
-  `<button>{submitText}</button>` -> `{submitText}`.
-- Extracts simple `onClick` handler references from button props, for example
-  `<button onClick={handleSave}>Save</button>` -> `handleSave`.
-- Emits `enclosingSymbol` when the button appears inside a function component
-  such as `function App()`.
-- Matches `fetch("/path")`.
-- Matches `axios.get("/path")`, `axios.post("/path")`, `axios.put("/path")`,
-  `axios.patch("/path")`, and `axios.delete("/path")`.
-- Resolves simple string constants used as call arguments.
+The first AST implementation supports syntax-only tracing for:
 
-Recommended fact:
+- string literals
+- no-substitution template literals
+- identifiers bound to local variable declarations
+- template expressions
+- binary string concatenation with `+`
+- object property access for local object literals
 
-```ser
-fact ui_text
-fact ui_action
-fact frontend_api_call
-```
-
-Recommended build fields:
-
-```ser
-build {
-  component: "react"
-  kind: "button"
-  event: "click"
-  text: label
-  handler: handler
-}
-```
-
-```ser
-build {
-  client: "axios"
-  method: method
-  path: path
-}
-```
+This runtime does not yet use the TypeScript type checker or cross-file symbol
+resolution.

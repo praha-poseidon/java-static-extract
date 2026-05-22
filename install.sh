@@ -155,6 +155,11 @@ install_ts_cli() {
   if [[ ! -f "$source_bin" ]]; then
     die "TS CLI script was not found: $source_bin"
   fi
+  if [[ ! -d "$ROOT_DIR/static-extract-runtime-ts/node_modules/ts-morph" ]]; then
+    command_exists npm || die "npm was not found. Source install needs npm to install TS runtime dependencies."
+    echo "Installing static-extract-ts dependencies..."
+    (cd "$ROOT_DIR/static-extract-runtime-ts" && npm install)
+  fi
 
   chmod +x "$source_bin"
   mkdir -p "$BIN_DIR"

@@ -2,6 +2,7 @@ target/
 dist/
 build/
 .gradle/
+node_modules/
 
 # IDE files
 .idea/

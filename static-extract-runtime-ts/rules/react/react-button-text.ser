@@ -11,4 +11,3 @@ build {
   kind: "button"
   text: label
 }
-

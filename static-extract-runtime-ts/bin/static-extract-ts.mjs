@@ -41,16 +41,14 @@ async function main(argv) {
       return await printReport(diagnose(parseExtractionOptions(argv.slice(1))));
     }
     if (command === "run") {
-      return await printReport(run(parseRunOptions(argv.slice(1))));
+      return await printReport(run(parseExtractionOptions(argv.slice(1), true)));
     }
   } catch (error) {
     writeError(error.message ?? String(error));
     return 1;
   }
-  if (!["init", "try", "diagnose", "run"].includes(command)) {
-    writeError(`Unknown command: ${command}`);
-    return 1;
-  }
+  writeError(`Unknown command: ${command}`);
+  return 1;
 }
 
 async function printReport(promise) {
@@ -65,17 +63,13 @@ async function printReport(promise) {
 }
 
 function parseInitOptions(argv) {
-  const options = {
-    project: undefined
-  };
+  const options = { project: undefined };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    switch (arg) {
-      case "--project":
-        options.project = requireValue(argv, ++i, arg);
-        break;
-      default:
-        throw new Error(`Unknown init option: ${arg}`);
+    if (arg === "--project") {
+      options.project = requireValue(argv, ++i, arg);
+    } else {
+      throw new Error(`Unknown init option: ${arg}`);
     }
   }
   if (!options.project) {
@@ -126,10 +120,6 @@ function parseExtractionOptions(argv, allowOutput = false) {
   return options;
 }
 
-function parseRunOptions(argv) {
-  return parseExtractionOptions(argv, true);
-}
-
 function requireValue(argv, index, option) {
   const value = argv[index];
   if (!value || value.startsWith("--")) {
@@ -139,10 +129,7 @@ function requireValue(argv, index, option) {
 }
 
 function writeError(message) {
-  process.stderr.write(JSON.stringify({
-    status: "ERROR",
-    message
-  }) + "\n");
+  process.stderr.write(JSON.stringify({ status: "ERROR", message }) + "\n");
 }
 
 process.exitCode = await main(process.argv.slice(2));

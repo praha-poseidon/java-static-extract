@@ -4,6 +4,10 @@ Source of truth: `static-extract-runtime-ts/vocabulary.md`.
 
 Currently supported SER:
 
+Use generic JSX and call vocabulary first. Specific names such as `button`,
+`ActionButton`, `fetch`, `axios`, or `request` are selector values, not separate
+runtime features.
+
 ```ser
 rule "React Button Text"
 fact ui_text
@@ -16,6 +20,21 @@ let label =
 build {
   component: "react"
   kind: "button"
+  text: label
+}
+```
+
+```ser
+rule "Generic Component Text"
+fact ui_text
+
+find jsx ActionButton
+
+let label =
+  from children take text
+
+build {
+  component: "ActionButton"
   text: label
 }
 ```

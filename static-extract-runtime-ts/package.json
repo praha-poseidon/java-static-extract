@@ -3,12 +3,15 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "TypeScript runtime skeleton for Static Extract SER rules.",
+  "description": "TypeScript/JavaScript AST runtime for Static Extract SER rules.",
   "bin": {
     "static-extract-ts": "./bin/static-extract-ts.mjs"
   },
   "scripts": {
     "test": "node test/spec-contract.test.mjs && node test/e2e-ser-authoring.test.mjs"
+  },
+  "dependencies": {
+    "ts-morph": "^24.0.0"
   },
   "engines": {
     "node": ">=20"

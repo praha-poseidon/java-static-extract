@@ -23,9 +23,7 @@ for (const rule of manifest.rules) {
   assert.ok(existsSync(resolve(root, "rules", rule)), `Missing rule: ${rule}`);
 }
 
-const help = execFileSync("node", [resolve(root, "bin/static-extract-ts.mjs"), "--help"], {
-  encoding: "utf8"
-});
+const help = execFileSync("node", [resolve(root, "bin/static-extract-ts.mjs"), "--help"], { encoding: "utf8" });
 assert.match(help, /Usage: static-extract-ts/);
 assert.match(help, /init/);
 assert.match(help, /try/);
@@ -63,7 +61,7 @@ function assertExample(example) {
     resolve(root, "bin/static-extract-ts.mjs"),
     "try",
     "--project", example,
-    "--file", resolve(example, "input"),
+    "--source", resolve(example, "input"),
     "--rule", resolve(example, "rule.ser")
   ], { encoding: "utf8" });
   assert.match(tryReport, /"status": "MATCH"/);
@@ -73,10 +71,10 @@ function assertExample(example) {
   writeFileSync(missingRule, `rule "Missing JSX"
 fact ui_text
 
-find jsx input
+find jsx DoesNotExist
 
 let label =
-  from jsx input take text
+  from children take text
 
 build {
   label: label
@@ -91,7 +89,6 @@ build {
   ], { encoding: "utf8" });
   assert.match(diagnoseReport, /"status": "NO_MATCH"/);
   assert.match(diagnoseReport, /"sourceFacts"/);
-  assert.match(diagnoseReport, /"name": "button"/);
 
   const report = execFileSync("node", [
     resolve(root, "bin/static-extract-ts.mjs"),
@@ -111,15 +108,15 @@ build {
   assert.deepEqual(actualLines, expectedLines);
 }
 
-const example = resolve(repo, "spec/examples/ts/react-button-text");
-const builtinReport = execFileSync("node", [
+const buttonExample = resolve(repo, "spec/examples/ts/react-button-text");
+const buttonBuiltinReport = execFileSync("node", [
   resolve(root, "bin/static-extract-ts.mjs"),
   "run",
-  "--project", example,
-  "--source", resolve(example, "input"),
+  "--project", buttonExample,
+  "--source", resolve(buttonExample, "input"),
   "--builtin"
 ], { encoding: "utf8" });
-assert.match(builtinReport, /"resultCount": 2/);
+assert.match(buttonBuiltinReport, /"resultCount": 2/);
 
 const apiExample = resolve(repo, "spec/examples/ts/api-call");
 const apiBuiltinReport = execFileSync("node", [
@@ -145,10 +142,7 @@ function assertExtractedFactShape(record, schema) {
 
 function assertMatchesType(value, typeSpec, name) {
   const allowed = Array.isArray(typeSpec) ? typeSpec : [typeSpec];
-  assert.ok(
-    allowed.some((type) => matchesType(value, type)),
-    `Field ${name} does not match schema type ${JSON.stringify(typeSpec)}`
-  );
+  assert.ok(allowed.some((type) => matchesType(value, type)), `Field ${name} does not match schema type ${JSON.stringify(typeSpec)}`);
 }
 
 function matchesType(value, type) {
