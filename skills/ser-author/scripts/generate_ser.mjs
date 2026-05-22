@@ -18,6 +18,36 @@ build {
 }
 `;
 
+export const JAVA_ANNOTATION_FACT_SER = `rule "Spec Java Annotation Fact"
+fact backend_endpoint
+
+find method with annotation @RouteGet
+
+let path =
+  from annotation on method @RouteGet take attr(value)
+
+build {
+  path: path
+}
+`;
+
+export const JAVA_CONFIG_FIELD_SER = `rule "Spec Java Config Field"
+fact config_key
+
+find field with annotation @ConfigProperty
+
+let configKey =
+  from annotation on field @ConfigProperty take attr(value)
+
+let fieldName =
+  from field take name
+
+build {
+  key: configKey
+  field: fieldName
+}
+`;
+
 async function main(argv) {
   const options = parseArgs(argv);
   if (!options.runtime || !options.request || !options.out) {
@@ -33,6 +63,12 @@ export function generateSer(runtime, request) {
   const normalized = request.toLowerCase();
   if (runtime === "react" && hasAny(normalized, ["button", "按钮"]) && hasAny(normalized, ["text", "文案", "中文"])) {
     return REACT_BUTTON_SER;
+  }
+  if (runtime === "java-jdt" && hasAny(normalized, ["config", "configuration", "配置", "配置项", "config_key"])) {
+    return JAVA_CONFIG_FIELD_SER;
+  }
+  if (runtime === "java-jdt" && hasAny(normalized, ["annotation", "annotated", "注解", "endpoint", "端点", "接口", "backend"])) {
+    return JAVA_ANNOTATION_FACT_SER;
   }
   throw new Error(`Unsupported SER authoring request for runtime ${runtime}: ${request.trim()}`);
 }

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { mkdir, readdir, writeFile } from "node:fs/promises";
-import { dirname, extname, join, resolve } from "node:path";
+import { delimiter, dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateSer } from "./generate_ser.mjs";
 
@@ -22,6 +22,7 @@ async function main(argv) {
   const runtime = options.runtime ?? await detectRuntime(project);
   const generatedRule = options.rule ? resolve(options.rule) : join(outDir, "generated.ser");
   const factsFile = options.out ?? join(outDir, "facts.jsonl");
+  const reportFile = join(outDir, "report.json");
 
   if (options.mode === "generate" || options.mode === "generate-and-extract") {
     if (!options.request) {
@@ -34,7 +35,7 @@ async function main(argv) {
   let extractReport = null;
   if (options.mode === "extract" || options.mode === "generate-and-extract") {
     const rule = options.rule ? resolve(options.rule) : generatedRule;
-    extractReport = runExtract(runtime, project, rule, factsFile);
+    extractReport = runExtract(runtime, project, rule, factsFile, options);
   }
 
   const result = {
@@ -42,8 +43,10 @@ async function main(argv) {
     mode: options.mode,
     serFile: generatedRule,
     factsFile: extractReport ? factsFile : null,
+    reportFile,
     extractReport
   };
+  await writeFile(reportFile, JSON.stringify(result, null, 2) + "\n", "utf8");
   process.stdout.write(JSON.stringify(result, null, 2) + "\n");
 }
 
@@ -58,22 +61,146 @@ async function detectRuntime(project) {
   throw new Error("Unable to detect runtime from project files.");
 }
 
-function runExtract(runtime, project, rule, factsFile) {
+function runExtract(runtime, project, rule, factsFile, options) {
   if (runtime === "react") {
-    const stdout = execFileSync("node", [
-      resolve(repo, "static-extract-runtime-ts/bin/static-extract-ts.mjs"),
+    const cli = options.cliTs ? resolve(options.cliTs) : resolve(repo, "static-extract-runtime-ts/bin/static-extract-ts.mjs");
+    const initReport = runJson("node", [
+      cli,
+      "init",
+      "--project", project
+    ]);
+    const tryReport = runJson("node", [
+      cli,
+      "try",
+      "--project", project,
+      "--source", project,
+      "--rule", rule
+    ]);
+    const diagnoseReport = tryReport.resultCount > 0 ? null : runJson("node", [
+      cli,
+      "diagnose",
+      "--project", project,
+      "--source", project,
+      "--rule", rule
+    ]);
+    const runReport = runJson("node", [
+      cli,
       "run",
       "--project", project,
       "--source", project,
       "--rule", rule,
       "--out", factsFile
-    ], { encoding: "utf8" });
-    return JSON.parse(stdout);
+    ]);
+    return {
+      initReport,
+      tryReport,
+      diagnoseReport,
+      runReport,
+      resultCount: runReport.resultCount
+    };
   }
   if (runtime === "java-jdt") {
-    throw new Error("java-jdt orchestration is not implemented in this skill helper yet.");
+    const command = javaCommand(options);
+    const javaSources = scanFilesSync(project, [".java"]);
+    if (javaSources.length === 0) {
+      throw new Error(`No Java source files found under project: ${project}`);
+    }
+    const tryArgs = [
+      "try",
+      "--project", project,
+      ...javaSources.flatMap((source) => ["--source", source]),
+      "--rule", rule
+    ];
+    const diagnoseArgs = [
+      "diagnose",
+      "--project", project,
+      ...javaSources.flatMap((source) => ["--source", source]),
+      "--rule", rule
+    ];
+    const initReport = runJavaJson(command, [
+      "init",
+      "--project", project
+    ]);
+    const tryReport = runJavaJson(command, tryArgs);
+    const diagnoseReport = tryReport.resultCount > 0 ? null : runJavaJson(command, diagnoseArgs);
+    const runReport = runJavaJson(command, [
+      "run",
+      "--project", project,
+      "--source", project,
+      "--rule", rule,
+      "--out", factsFile
+    ]);
+    return {
+      initReport,
+      tryReport,
+      diagnoseReport,
+      runReport,
+      resultCount: runReport.resultCount
+    };
   }
   throw new Error(`Unsupported runtime: ${runtime}`);
+}
+
+function runJson(command, args) {
+  const stdout = execFileSync(command, args, { encoding: "utf8" });
+  return JSON.parse(stdout);
+}
+
+function runJavaJson(command, args) {
+  if (command.kind === "direct") {
+    return runJson(command.command, [...command.prefixArgs, ...args]);
+  }
+  return runJson(command.command, [
+    "-cp",
+    command.classpath,
+    "com.poseidon.javastatic.extract.cli.JavaStaticExtractCli",
+    ...args
+  ]);
+}
+
+function javaCommand(options) {
+  if (options.cliJava) {
+    return {
+      kind: "direct",
+      command: resolve(options.cliJava),
+      prefixArgs: []
+    };
+  }
+  if (process.env.STATIC_EXTRACT_JAVA_CLI) {
+    return {
+      kind: "direct",
+      command: process.env.STATIC_EXTRACT_JAVA_CLI,
+      prefixArgs: []
+    };
+  }
+  if (process.env.STATIC_EXTRACT_JAVA_CLASSPATH) {
+    return {
+      kind: "classpath",
+      command: process.env.JAVA ?? "java",
+      classpath: process.env.STATIC_EXTRACT_JAVA_CLASSPATH
+    };
+  }
+  const packaged = resolve(repo, "static-extract-runtime-java-cli/target/appassembler/bin/static-extract-java");
+  if (existsSync(packaged)) {
+    return {
+      kind: "direct",
+      command: packaged,
+      prefixArgs: []
+    };
+  }
+  if (commandExists("static-extract-java")) {
+    return {
+      kind: "direct",
+      command: "static-extract-java",
+      prefixArgs: []
+    };
+  }
+  throw new Error("Unable to find static-extract-java. Install the release package, run Maven package, pass --cli-java, or set STATIC_EXTRACT_JAVA_CLASSPATH.");
+}
+
+function commandExists(command) {
+  const paths = (process.env.PATH ?? "").split(delimiter).filter(Boolean);
+  return paths.some((dir) => existsSync(join(dir, command)));
 }
 
 async function scanFiles(root, extensions) {
@@ -98,6 +225,32 @@ async function scanFiles(root, extensions) {
   return files;
 }
 
+function scanFilesSync(root, extensions) {
+  if (!existsSync(root)) {
+    return [];
+  }
+  if (!statSync(root).isDirectory()) {
+    return extensions.includes(extname(root)) ? [root] : [];
+  }
+  const files = [];
+  for (const entry of readdirSyncSafe(root)) {
+    if (entry.name === "node_modules" || entry.name === "target" || entry.name === ".git" || entry.name === ".ser") {
+      continue;
+    }
+    const path = join(root, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...scanFilesSync(path, extensions));
+    } else if (entry.isFile() && extensions.includes(extname(entry.name))) {
+      files.push(path);
+    }
+  }
+  return files.sort();
+}
+
+function readdirSyncSafe(root) {
+  return statSync(root).isDirectory() ? readdirSync(root, { withFileTypes: true }) : [];
+}
+
 function parseArgs(argv) {
   const options = {};
   for (let i = 0; i < argv.length; i++) {
@@ -117,6 +270,12 @@ function parseArgs(argv) {
         break;
       case "--runtime":
         options.runtime = requireValue(argv, ++i, arg);
+        break;
+      case "--cli-java":
+        options.cliJava = requireValue(argv, ++i, arg);
+        break;
+      case "--cli-ts":
+        options.cliTs = requireValue(argv, ++i, arg);
         break;
       case "--out":
         options.out = requireValue(argv, ++i, arg);
@@ -146,4 +305,3 @@ main(process.argv.slice(2)).catch((error) => {
   }) + "\n");
   process.exitCode = 1;
 });
-

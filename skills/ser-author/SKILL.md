@@ -18,8 +18,8 @@ project, or do both as one extraction workflow.
 3. Generate one `.ser` file containing the needed `rule` and optional `trace`
    blocks. Do not split rule and trace into separate files unless the user asks.
 4. If source code is available and the user wants extraction, run the matching
-   CLI with the generated or provided SER and validate the JSONL output against
-   `spec/schema/extracted-fact.schema.json`.
+   CLI workflow: `init`, `try`, `diagnose` if `try` has no matches, then `run`.
+5. Return the generated SER path, JSONL facts path, and report path.
 
 ## Guardrails
 
@@ -60,5 +60,14 @@ Supported modes:
 - `extract`: run extraction with an existing `--rule`.
 - `generate-and-extract`: generate SER, run CLI, and write `facts.jsonl`.
 
-The helpers currently support React button text extraction. For other requests,
-author the SER directly from the vocabulary reference, then use the relevant CLI.
+The helper writes:
+
+```text
+.static-extract/generated.ser
+.static-extract/facts.jsonl
+.static-extract/report.json
+```
+
+The deterministic helper currently supports React button text, Java annotated
+method facts, and Java config field facts. For other requests, author SER
+directly from the vocabulary reference, then use the relevant CLI.
