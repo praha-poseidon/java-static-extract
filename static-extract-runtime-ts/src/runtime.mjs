@@ -5,7 +5,63 @@ import { fileURLToPath } from "node:url";
 
 const runtimeRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
+export async function init(request) {
+  const projectRoot = resolvePath(request.project);
+  const workspaceDir = join(projectRoot, ".ser");
+  const generatedRulesDir = join(workspaceDir, "generated");
+  const rulesDir = join(workspaceDir, "rules");
+  const outputDir = join(workspaceDir, "out");
+  await mkdir(generatedRulesDir, { recursive: true });
+  await mkdir(rulesDir, { recursive: true });
+  await mkdir(outputDir, { recursive: true });
+  return {
+    status: "OK",
+    runtime: "ts",
+    projectRoot,
+    workspaceDir,
+    generatedRulesDir,
+    rulesDir,
+    outputDir
+  };
+}
+
+export async function tryRules(request) {
+  const report = await extract(request);
+  return {
+    status: report.resultCount > 0 ? "MATCH" : "NO_MATCH",
+    runtime: "ts",
+    resultCount: report.resultCount,
+    results: report.results
+  };
+}
+
+export async function diagnose(request) {
+  const report = await extract(request);
+  const sourceFiles = await resolveSourceFiles(request.sources);
+  return {
+    status: report.resultCount > 0 ? "MATCH" : "NO_MATCH",
+    runtime: "ts",
+    resultCount: report.resultCount,
+    results: report.results,
+    sourceFacts: report.resultCount > 0 ? [] : await collectSourceFacts(sourceFiles, request.project)
+  };
+}
+
 export async function run(request) {
+  const report = await extract(request);
+  const lines = report.results.map((result) => JSON.stringify(result)).join("\n");
+  if (request.outputFile) {
+    await mkdir(dirname(resolvePath(request.outputFile)), { recursive: true });
+    await writeFile(request.outputFile, lines ? lines + "\n" : "", "utf8");
+  }
+  return {
+    resultCount: report.resultCount,
+    outputFile: request.outputFile,
+    results: report.results
+  };
+}
+
+async function extract(request) {
   const ruleFiles = await resolveRuleFiles(request);
   if (ruleFiles.length === 0) {
     throw new Error("Pass at least one SER rule file, rule directory, or enable builtin rules.");
@@ -27,15 +83,8 @@ export async function run(request) {
     }
   }
 
-  const lines = results.map((result) => JSON.stringify(result)).join("\n");
-  if (request.outputFile) {
-    await mkdir(dirname(resolvePath(request.outputFile)), { recursive: true });
-    await writeFile(request.outputFile, lines ? lines + "\n" : "", "utf8");
-  }
-
   return {
     resultCount: results.length,
-    outputFile: request.outputFile,
     results
   };
 }
@@ -154,6 +203,29 @@ function readButtonText(inner) {
     return `{${expression[1].trim()}}`;
   }
   return inner.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+}
+
+async function collectSourceFacts(sourceFiles, projectRoot) {
+  const facts = [];
+  for (const sourceFile of sourceFiles) {
+    const source = await readFile(sourceFile, "utf8");
+    const buttonPattern = /<button\b([^>]*)>([\s\S]*?)<\/button>/g;
+    let match;
+    while ((match = buttonPattern.exec(source)) !== null) {
+      facts.push({
+        kind: "jsx",
+        name: "button",
+        text: readButtonText(match[2]),
+        raw: match[0],
+        projectFilePath: projectFilePath(sourceFile, projectRoot),
+        absoluteFilePath: sourceFile,
+        startLine: lineAt(source, match.index),
+        endLine: lineAt(source, match.index + match[0].length - 1),
+        enclosingSymbol: enclosingComponent(source, match.index)
+      });
+    }
+  }
+  return facts;
 }
 
 function lineAt(source, index) {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,30 +25,91 @@ const help = execFileSync("node", [resolve(root, "bin/static-extract-ts.mjs"), "
   encoding: "utf8"
 });
 assert.match(help, /Usage: static-extract-ts/);
+assert.match(help, /init/);
+assert.match(help, /try/);
+assert.match(help, /diagnose/);
 
-const example = resolve(repo, "spec/examples/ts/react-button-text");
-const output = resolve(mkdtempSync(resolve(tmpdir(), "static-extract-ts-")), "facts.jsonl");
-const report = execFileSync("node", [
+const initProject = mkdtempSync(resolve(tmpdir(), "static-extract-ts-init-"));
+const initReport = execFileSync("node", [
+  resolve(root, "bin/static-extract-ts.mjs"),
+  "init",
+  "--project", initProject
+], { encoding: "utf8" });
+assert.match(initReport, /"runtime": "ts"/);
+assert.ok(existsSync(resolve(initProject, ".ser/generated")));
+assert.ok(existsSync(resolve(initProject, ".ser/rules")));
+assert.ok(existsSync(resolve(initProject, ".ser/out")));
+
+const examplesRoot = resolve(repo, "spec/examples/ts");
+const examples = readdirSync(examplesRoot, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => resolve(examplesRoot, entry.name))
+  .sort();
+assert.ok(examples.length > 0, "No TS spec examples found.");
+
+for (const example of examples) {
+  assertExample(example);
+}
+
+function assertExample(example) {
+  const output = resolve(mkdtempSync(resolve(tmpdir(), "static-extract-ts-")), "facts.jsonl");
+  const tryReport = execFileSync("node", [
+    resolve(root, "bin/static-extract-ts.mjs"),
+    "try",
+    "--project", example,
+    "--file", resolve(example, "input"),
+    "--rule", resolve(example, "rule.ser")
+  ], { encoding: "utf8" });
+  assert.match(tryReport, /"status": "MATCH"/);
+  assert.match(tryReport, /"resultCount": 2/);
+
+  const missingRule = resolve(mkdtempSync(resolve(tmpdir(), "static-extract-ts-rule-")), "missing.ser");
+  writeFileSync(missingRule, `rule "Missing JSX"
+fact ui_text
+
+find jsx input
+
+let label =
+  from jsx input take text
+
+build {
+  label: label
+}
+`);
+  const diagnoseReport = execFileSync("node", [
+    resolve(root, "bin/static-extract-ts.mjs"),
+    "diagnose",
+    "--project", example,
+    "--source", resolve(example, "input"),
+    "--rule", missingRule
+  ], { encoding: "utf8" });
+  assert.match(diagnoseReport, /"status": "NO_MATCH"/);
+  assert.match(diagnoseReport, /"sourceFacts"/);
+  assert.match(diagnoseReport, /"name": "button"/);
+
+  const report = execFileSync("node", [
   resolve(root, "bin/static-extract-ts.mjs"),
   "run",
   "--project", example,
   "--source", resolve(example, "input"),
   "--rule", resolve(example, "rule.ser"),
   "--out", output
-], { encoding: "utf8" });
-assert.match(report, /"resultCount": 2/);
+  ], { encoding: "utf8" });
+  assert.match(report, /"resultCount": 2/);
 
-const actualLines = readFileSync(output, "utf8").trim().split("\n").map((line) => JSON.parse(line));
-const expectedLines = readFileSync(resolve(example, "expected.jsonl"), "utf8")
-  .trim()
-  .split("\n")
-  .map((line) => JSON.parse(line.replaceAll("${EXAMPLE_DIR}", example)));
-const schema = JSON.parse(readFileSync(schemaFile, "utf8"));
-for (const record of actualLines) {
-  assertExtractedFactShape(record, schema);
+  const actualLines = readFileSync(output, "utf8").trim().split("\n").map((line) => JSON.parse(line));
+  const expectedLines = readFileSync(resolve(example, "expected.jsonl"), "utf8")
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line.replaceAll("${EXAMPLE_DIR}", example)));
+  const schema = JSON.parse(readFileSync(schemaFile, "utf8"));
+  for (const record of actualLines) {
+    assertExtractedFactShape(record, schema);
+  }
+  assert.deepEqual(actualLines, expectedLines);
 }
-assert.deepEqual(actualLines, expectedLines);
 
+const example = resolve(repo, "spec/examples/ts/react-button-text");
 const builtinReport = execFileSync("node", [
   resolve(root, "bin/static-extract-ts.mjs"),
   "run",

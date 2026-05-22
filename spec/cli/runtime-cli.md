@@ -60,3 +60,6 @@ static-extract-vue --alias @=src
 ```
 
 The runtime-specific flags affect extraction accuracy, not the output contract.
+
+Runtimes MAY keep older aliases such as `--rules` or `--file`, but
+documentation and skills SHOULD prefer the shared names above.

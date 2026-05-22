@@ -68,7 +68,7 @@ public final class JavaStaticExtractCli implements Callable<Integer> {
 
     @Command(name = "try", description = "Run SER rules against selected Java files.")
     static final class TryCommand extends ExtractionCommand {
-        @Option(names = "--file", required = true, description = "Java file to test. Can be repeated.")
+        @Option(names = {"--source", "--file"}, required = true, description = "Java file to test. Can be repeated.")
         List<Path> files = new ArrayList<>();
 
         @Override
@@ -87,7 +87,7 @@ public final class JavaStaticExtractCli implements Callable<Integer> {
 
     @Command(name = "diagnose", description = "Run rules and return source facts when no result is emitted.")
     static final class DiagnoseCommand extends ExtractionCommand {
-        @Option(names = "--file", required = true, description = "Java file to diagnose. Can be repeated.")
+        @Option(names = {"--source", "--file"}, required = true, description = "Java file to diagnose. Can be repeated.")
         List<Path> files = new ArrayList<>();
 
         @Override
@@ -142,7 +142,7 @@ public final class JavaStaticExtractCli implements Callable<Integer> {
         @Option(names = "--rule", description = "SER rule file. Can be repeated.")
         List<Path> ruleFiles = new ArrayList<>();
 
-        @Option(names = "--rules", description = "Directory containing .ser rule files. Can be repeated.")
+        @Option(names = {"--rule-dir", "--rules"}, description = "Directory containing .ser rule files. Can be repeated.")
         List<Path> ruleDirectories = new ArrayList<>();
 
         @Option(names = "--trace-rule", description = "SER trace rule file. Can be repeated.")

@@ -4,7 +4,7 @@
 
 ```text
 rule "Spring MVC HTTP Inbound"
-endpoint HTTP inbound
+fact backend_endpoint
 
 find method with annotation @*Mapping
 
@@ -38,10 +38,13 @@ build {
 ## Structure
 
 - `rule "Name"`: human-readable rule name.
-- `endpoint TYPE DIRECTION`: output labels. The extractor does not validate them.
+- `fact type_name`: output fact type, such as `backend_endpoint`, `api_call`, or `config_key`.
 - `find ...`: choose the Java element that anchors extraction.
 - `let name = ...`: define an intermediate value. Multiple `from` lines are fallback sources; the first matching value wins.
 - `build { key: value }`: emit final fields. Downstream tools read this field map.
+
+Legacy `endpoint TYPE DIRECTION` rules are still accepted for compatibility.
+New rules should use `fact`.
 
 ## Common Find Clauses
 

@@ -1,12 +1,14 @@
 # SER Rule Guide
 
-SER describes Java code shapes and the fields you want to output.
+SER describes code shapes and the fields you want to output.
 
-SER 用来描述 Java 代码形态，以及最终要输出哪些字段。
+SER 用来描述代码形态，以及最终要输出哪些字段。
 
-It is not only for endpoints. HTTP endpoints, RPC calls, config keys, message topics, and any other Java static facts can all be represented as rule output fields.
+It is not a dedicated endpoint format. HTTP endpoints, RPC calls, config keys,
+message topics, UI text, and other static facts are all represented by
+`factType` plus rule-built `fields`.
 
-它不只是为了 endpoint。HTTP 端点、RPC 调用、配置 key、消息 topic，或者其他 Java 静态信息，都可以通过规则输出字段表达。
+它不是专门的 endpoint 格式。HTTP 端点、RPC 调用、配置 key、消息 topic、UI 文案和其他静态事实，都通过 `factType` 加规则构建出来的 `fields` 表达。
 
 ## Extraction Rule Shape
 
@@ -14,7 +16,7 @@ It is not only for endpoints. HTTP endpoints, RPC calls, config keys, message to
 
 ```ser
 rule "Spring MVC HTTP Inbound"
-endpoint HTTP inbound
+fact backend_endpoint
 
 find method with annotation @*Mapping
 
@@ -52,18 +54,18 @@ build {
 
 `fact` 声明规则输出的标准事实类型，例如 `backend_endpoint`、`frontend_api_call`、`ui_action` 或 `config_key`。
 
-`endpoint` is two user-defined labels.
+`endpoint` is a legacy compatibility header with two user-defined labels.
 
-`endpoint` 是两个用户自定义标签。
+`endpoint` 是旧规则兼容头部，包含两个用户自定义标签。
 
 The extract layer does not validate labels like `HTTP`, `CONFIG`, `inbound`, or `outbound`.
 
 提取层不校验 `HTTP`、`CONFIG`、`inbound`、`outbound` 这些标签。
 
-`endpoint` remains supported for compatibility. New cross-language rules should
-prefer `fact`.
+`endpoint` remains supported for compatibility and is exposed through
+`classifiers`. New cross-language rules should use `fact`.
 
-`endpoint` 会继续兼容。新的跨语言规则建议优先使用 `fact`。
+`endpoint` 会继续兼容，并输出到 `classifiers`。新的跨语言规则应该使用 `fact`。
 
 SER has a shared syntax skeleton and runtime-specific vocabulary. The Java JDT
 runtime currently implements Java words such as `method`, `annotation`,

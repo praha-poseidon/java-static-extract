@@ -34,7 +34,7 @@ class JavaStaticExtractCliTest {
         CliOutput output = execute(
                 "try",
                 "--project", fixture.project().toString(),
-                "--file", fixture.javaFile().toString(),
+                "--source", fixture.javaFile().toString(),
                 "--rule", fixture.ruleFile().toString());
 
         assertEquals(0, output.exitCode());
@@ -48,7 +48,7 @@ class JavaStaticExtractCliTest {
         Path missingRule = tempDir.resolve("missing.ser");
         Files.writeString(missingRule, """
                 rule "Missing"
-                endpoint HTTP inbound
+                fact backend_endpoint
 
                 find method with annotation @Missing
 
@@ -63,7 +63,7 @@ class JavaStaticExtractCliTest {
         CliOutput output = execute(
                 "diagnose",
                 "--project", fixture.project().toString(),
-                "--file", fixture.javaFile().toString(),
+                "--source", fixture.javaFile().toString(),
                 "--rule", missingRule.toString());
 
         assertEquals(0, output.exitCode());
@@ -104,7 +104,7 @@ class JavaStaticExtractCliTest {
         CliOutput output = execute(
                 "try",
                 "--project", fixture.project().toString(),
-                "--file", fixture.javaFile().toString());
+                "--source", fixture.javaFile().toString());
 
         assertEquals(1, output.exitCode());
         assertTrue(output.stderr().contains("\"status\":\"ERROR\""));
@@ -162,7 +162,7 @@ class JavaStaticExtractCliTest {
         Path ruleFile = tempDir.resolve("route-" + System.nanoTime() + ".ser");
         Files.writeString(ruleFile, """
                 rule "Custom HTTP Inbound"
-                endpoint HTTP inbound
+                fact backend_endpoint
 
                 find method with annotation @RouteGet
 

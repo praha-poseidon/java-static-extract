@@ -193,15 +193,15 @@ vocabulary.
 
 ## Facts
 
-`endpoint` is useful for HTTP and RPC extraction, but frontend-to-backend
-analysis needs a broader concept. The DSL should introduce `fact` as the
-general output type.
+SER uses `fact` as the general output type. HTTP endpoints, RPC calls, UI
+actions, configuration keys, and other product concepts are all facts with
+rule-built fields.
 
-`endpoint` 对 HTTP 和 RPC 提取有用，但前后端链路分析需要更通用的概念。DSL 应该引入 `fact` 作为通用输出类型。
+SER 使用 `fact` 作为通用输出类型。HTTP 端点、RPC 调用、UI action、配置 key 和其他产品概念，都是带规则字段的 fact。
 
-Initial standard fact types:
+Example fact types:
 
-初始标准事实类型：
+示例 fact 类型：
 
 ```text
 ui_action
