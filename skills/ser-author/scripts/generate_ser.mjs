@@ -18,6 +18,42 @@ build {
 }
 `;
 
+export const REACT_FETCH_API_SER = `rule "Fetch API Call"
+fact frontend_api_call
+
+find call fetch
+
+let method =
+  from call take method
+
+let path =
+  from argument[0] take value
+
+build {
+  client: "fetch"
+  method: method
+  path: path
+}
+`;
+
+export const REACT_AXIOS_API_SER = `rule "Axios API Call"
+fact frontend_api_call
+
+find call axios
+
+let method =
+  from call take method
+
+let path =
+  from argument[0] take value
+
+build {
+  client: "axios"
+  method: method
+  path: path
+}
+`;
+
 export const JAVA_ANNOTATION_FACT_SER = `rule "Spec Java Annotation Fact"
 fact backend_endpoint
 
@@ -63,6 +99,15 @@ export function generateSer(runtime, request) {
   const normalized = request.toLowerCase();
   if (runtime === "react" && hasAny(normalized, ["button", "按钮"]) && hasAny(normalized, ["text", "文案", "中文"])) {
     return REACT_BUTTON_SER;
+  }
+  if (runtime === "react" && hasAny(normalized, ["axios"])) {
+    return REACT_AXIOS_API_SER;
+  }
+  if (runtime === "react" && hasAny(normalized, ["fetch"])) {
+    return REACT_FETCH_API_SER;
+  }
+  if (runtime === "react" && hasAny(normalized, ["api", "接口", "request", "请求", "call", "调用"])) {
+    return REACT_AXIOS_API_SER;
   }
   if (runtime === "java-jdt" && hasAny(normalized, ["config", "configuration", "配置", "配置项", "config_key"])) {
     return JAVA_CONFIG_FIELD_SER;

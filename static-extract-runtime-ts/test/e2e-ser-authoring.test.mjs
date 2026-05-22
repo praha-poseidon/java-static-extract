@@ -72,6 +72,18 @@ const orchestratedExpected = readFileSync(resolve(orchestratedProject, "expected
 assert.deepEqual(orchestratedActual, orchestratedExpected);
 
 const javaAnnotationRequest = resolve(root, "test/fixtures/ser-author-java-annotation/request.txt");
+const reactApiRequest = resolve(root, "test/fixtures/ser-author-react-api/request.txt");
+const reactApiRule = resolve(tempDir, "react-api.ser");
+execFileSync("node", [
+  resolve(repo, "skills/ser-author/scripts/generate_ser.mjs"),
+  "--runtime", "react",
+  "--request", reactApiRequest,
+  "--out", reactApiRule
+], { encoding: "utf8" });
+const reactApiGenerated = readFileSync(reactApiRule, "utf8");
+assert.match(reactApiGenerated, /fact frontend_api_call/);
+assert.match(reactApiGenerated, /find call axios/);
+
 const javaGeneratedRule = resolve(tempDir, "java-annotation.ser");
 execFileSync("node", [
   resolve(repo, "skills/ser-author/scripts/generate_ser.mjs"),

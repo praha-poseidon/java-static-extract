@@ -15,6 +15,8 @@ assert.ok(existsSync(schemaFile));
 const manifest = JSON.parse(readFileSync(resolve(root, "rules/manifest.json"), "utf8"));
 assert.equal(manifest.runtime, "ts");
 assert.deepEqual(manifest.rules, [
+  "react/axios-api-call.ser",
+  "react/fetch-api-call.ser",
   "react/react-button-text.ser"
 ]);
 for (const rule of manifest.rules) {
@@ -118,6 +120,16 @@ const builtinReport = execFileSync("node", [
   "--builtin"
 ], { encoding: "utf8" });
 assert.match(builtinReport, /"resultCount": 2/);
+
+const apiExample = resolve(repo, "spec/examples/ts/api-call");
+const apiBuiltinReport = execFileSync("node", [
+  resolve(root, "bin/static-extract-ts.mjs"),
+  "run",
+  "--project", apiExample,
+  "--source", resolve(apiExample, "input"),
+  "--builtin"
+], { encoding: "utf8" });
+assert.match(apiBuiltinReport, /"resultCount": 3/);
 
 function assertExtractedFactShape(record, schema) {
   assert.equal(typeof record, "object");

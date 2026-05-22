@@ -1,0 +1,1 @@
+extract frontend API calls from axios in React pages

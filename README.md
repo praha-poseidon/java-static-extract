@@ -2,9 +2,9 @@
 
 Static Extract provides a language-neutral SER spec and per-language runtimes
 for extracting static facts from source code. The current implemented runtimes
-are Java/JDT and a minimal React/TS runtime.
+are Java/JDT and a React/TS runtime for button text and frontend API calls.
 
-Static Extract 提供一套语言无关的 SER 规范，以及面向不同语言的 runtime，用来从源码中静态提取信息。当前已经实现 Java/JDT runtime，以及一个最小 React/TS runtime。
+Static Extract 提供一套语言无关的 SER 规范，以及面向不同语言的 runtime，用来从源码中静态提取信息。当前已经实现 Java/JDT runtime，以及支持按钮文案和前端 API 调用的 React/TS runtime。
 
 It is designed for AI coding agents and other automation that needs reliable
 static facts instead of fragile text search.
@@ -78,10 +78,10 @@ Static Extract 当前可以做这些事：
 - 允许用户提供自己的提取规则、trace 规则、外部值解析器，或者自定义 JDT trace 解析逻辑。
 
 The Java runtime ships Java/JDT built-in rules such as Spring MVC,
-RestTemplate, and Spring config extraction. The TS runtime currently ships a
-minimal React button text rule.
+RestTemplate, and Spring config extraction. The TS runtime currently ships
+React button text and frontend API call rules for `fetch` and `axios`.
 
-Java runtime 内置 Java/JDT 规则，例如 Spring MVC、RestTemplate、Spring config 提取。TS runtime 当前内置一个最小 React button 文案规则。
+Java runtime 内置 Java/JDT 规则，例如 Spring MVC、RestTemplate、Spring config 提取。TS runtime 当前内置 React button 文案规则，以及 `fetch`、`axios` 前端 API 调用规则。
 
 ## Modules
 
@@ -109,8 +109,8 @@ static-extract-runtime-java-cli
   基于 picocli 的命令行入口，底层调用 assistant 工作流 API。
 
 static-extract-runtime-ts
-  Node-based CLI and minimal React/TS runtime.
-  基于 Node 的 CLI 和最小 React/TS runtime。
+  Node-based CLI and React/TS runtime.
+  基于 Node 的 CLI 和 React/TS runtime。
 
 skills/ser-author
   Agent Skill for generating SER and orchestrating CLI extraction.

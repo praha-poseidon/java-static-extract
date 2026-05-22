@@ -79,6 +79,8 @@ async function extract(request) {
     for (const rule of rules) {
       if (rule.findKind === "jsx" && rule.findName === "button") {
         results.push(...extractReactButtons(rule, source, sourceFile, request.project));
+      } else if (rule.findKind === "call" && (rule.findName === "fetch" || rule.findName === "axios")) {
+        results.push(...extractApiCalls(rule, source, sourceFile, request.project));
       }
     }
   }
@@ -111,7 +113,7 @@ async function resolveSourceFiles(sources) {
       continue;
     }
     if (statSync(resolved).isDirectory()) {
-      files.push(...await scanFiles(resolved, [".jsx", ".tsx"]));
+      files.push(...await scanFiles(resolved, [".jsx", ".tsx", ".ts", ".js"]));
     } else {
       files.push(resolved);
     }
@@ -197,6 +199,108 @@ function extractReactButtons(rule, source, sourceFile, projectRoot) {
   return results;
 }
 
+function extractApiCalls(rule, source, sourceFile, projectRoot) {
+  const constants = collectStringConstants(source);
+  const calls = rule.findName === "fetch" ? findFetchCalls(source, constants) : findAxiosCalls(source, constants);
+  return calls.map((call) => {
+    const fields = {};
+    for (const [name, value] of Object.entries(rule.fields)) {
+      if (typeof value === "object" && Object.hasOwn(call.values, value.ref)) {
+        fields[name] = call.values[value.ref];
+      } else {
+        fields[name] = value;
+      }
+    }
+    return {
+      rule: rule.name,
+      factType: rule.factType,
+      classifiers: {},
+      fields,
+      projectFilePath: projectFilePath(sourceFile, projectRoot),
+      absoluteFilePath: sourceFile,
+      startLine: lineAt(source, call.index),
+      endLine: lineAt(source, call.index + call.raw.length - 1),
+      enclosingSymbol: enclosingComponent(source, call.index)
+    };
+  });
+}
+
+function findFetchCalls(source, constants) {
+  const calls = [];
+  const pattern = /\bfetch\s*\(\s*([^,\n\r)]*)(?:,\s*([\s\S]*?))?\)/g;
+  let match;
+  while ((match = pattern.exec(source)) !== null) {
+    const path = resolveTsValue(match[1], constants);
+    if (!path) {
+      continue;
+    }
+    calls.push({
+      raw: match[0],
+      index: match.index,
+      values: {
+        owner: "global",
+        name: "fetch",
+        method: fetchMethod(match[2]),
+        path
+      }
+    });
+  }
+  return calls;
+}
+
+function findAxiosCalls(source, constants) {
+  const calls = [];
+  const pattern = /\baxios\.(get|post|put|patch|delete)\s*\(\s*([^,\n\r)]*)/g;
+  let match;
+  while ((match = pattern.exec(source)) !== null) {
+    const path = resolveTsValue(match[2], constants);
+    if (!path) {
+      continue;
+    }
+    calls.push({
+      raw: match[0],
+      index: match.index,
+      values: {
+        owner: "axios",
+        name: match[1],
+        method: match[1].toUpperCase(),
+        path
+      }
+    });
+  }
+  return calls;
+}
+
+function fetchMethod(optionsSource) {
+  if (!optionsSource) {
+    return "GET";
+  }
+  const method = optionsSource.match(/\bmethod\s*:\s*["'`]([A-Za-z]+)["'`]/);
+  return method ? method[1].toUpperCase() : "GET";
+}
+
+function collectStringConstants(source) {
+  const constants = new Map();
+  const pattern = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(["'`])([^"'`$]*)\2/g;
+  let match;
+  while ((match = pattern.exec(source)) !== null) {
+    constants.set(match[1], match[3]);
+  }
+  return constants;
+}
+
+function resolveTsValue(raw, constants) {
+  const value = raw.trim();
+  const literal = value.match(/^(["'`])([^"'`$]*)\1$/);
+  if (literal) {
+    return literal[2];
+  }
+  if (constants.has(value)) {
+    return constants.get(value);
+  }
+  return value ? `{${value}}` : "";
+}
+
 function readButtonText(inner) {
   const expression = inner.trim().match(/^\{\s*([^}]+?)\s*\}$/);
   if (expression) {
@@ -222,6 +326,21 @@ async function collectSourceFacts(sourceFiles, projectRoot) {
         startLine: lineAt(source, match.index),
         endLine: lineAt(source, match.index + match[0].length - 1),
         enclosingSymbol: enclosingComponent(source, match.index)
+      });
+    }
+    for (const call of [...findFetchCalls(source, collectStringConstants(source)), ...findAxiosCalls(source, collectStringConstants(source))]) {
+      facts.push({
+        kind: "call",
+        name: call.values.name,
+        owner: call.values.owner,
+        method: call.values.method,
+        path: call.values.path,
+        raw: call.raw,
+        projectFilePath: projectFilePath(sourceFile, projectRoot),
+        absoluteFilePath: sourceFile,
+        startLine: lineAt(source, call.index),
+        endLine: lineAt(source, call.index + call.raw.length - 1),
+        enclosingSymbol: enclosingComponent(source, call.index)
       });
     }
   }

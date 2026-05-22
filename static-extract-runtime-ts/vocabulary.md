@@ -10,12 +10,18 @@ Supported find selectors:
 
 ```ser
 find jsx button
+find call fetch
+find call axios
 ```
 
 Supported source expressions:
 
 ```ser
 from jsx button take text
+from call take method
+from call take name
+from call take owner
+from argument[0] take value
 ```
 
 Current behavior:
@@ -27,11 +33,16 @@ Current behavior:
   `<button>{submitText}</button>` -> `{submitText}`.
 - Emits `enclosingSymbol` when the button appears inside a function component
   such as `function App()`.
+- Matches `fetch("/path")`.
+- Matches `axios.get("/path")`, `axios.post("/path")`, `axios.put("/path")`,
+  `axios.patch("/path")`, and `axios.delete("/path")`.
+- Resolves simple string constants used as call arguments.
 
 Recommended fact:
 
 ```ser
 fact ui_text
+fact frontend_api_call
 ```
 
 Recommended build fields:
@@ -44,3 +55,10 @@ build {
 }
 ```
 
+```ser
+build {
+  client: "axios"
+  method: method
+  path: path
+}
+```

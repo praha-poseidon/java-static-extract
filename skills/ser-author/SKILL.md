@@ -68,6 +68,7 @@ The helper writes:
 .static-extract/report.json
 ```
 
-The deterministic helper currently supports React button text, Java annotated
-method facts, and Java config field facts. For other requests, author SER
-directly from the vocabulary reference, then use the relevant CLI.
+The deterministic helper currently supports React button text, React frontend
+API calls, Java annotated method facts, and Java config field facts. For other
+requests, author SER directly from the vocabulary reference, then use the
+relevant CLI.

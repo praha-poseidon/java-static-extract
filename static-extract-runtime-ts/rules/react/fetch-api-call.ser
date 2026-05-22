@@ -1,0 +1,16 @@
+rule "Fetch API Call"
+fact frontend_api_call
+
+find call fetch
+
+let method =
+  from call take method
+
+let path =
+  from argument[0] take value
+
+build {
+  client: "fetch"
+  method: method
+  path: path
+}
