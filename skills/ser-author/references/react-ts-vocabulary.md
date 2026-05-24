@@ -79,6 +79,42 @@ build {
 }
 ```
 
+```ser
+rule "Import Shape"
+fact import_shape
+
+find import react
+
+let moduleName =
+  from import take module
+
+let namedImports =
+  from import take named
+
+build {
+  module: moduleName
+  namedImports: namedImports
+}
+```
+
+```ser
+rule "Class Shape"
+fact class_shape
+
+find class UserPanel
+
+let className =
+  from class take name
+
+let baseClass =
+  from class take extends
+
+build {
+  name: className
+  extends: baseClass
+}
+```
+
 Use this for requests such as:
 
 - extract React button text
@@ -88,3 +124,5 @@ Use this for requests such as:
 - list button labels in `.tsx` or `.jsx` files
 - extract frontend API calls from fetch or axios
 - list API paths used by React pages
+- list imports used by a file or component
+- extract class component names and base classes

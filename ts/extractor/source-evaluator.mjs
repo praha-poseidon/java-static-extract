@@ -48,6 +48,12 @@ export function evaluateSource(source, anchor) {
   if (source.element === "variable" && anchor.kind === "variable") {
     return takeVariableValue(anchor.node, source.take);
   }
+  if (source.element === "import" && anchor.kind === "import") {
+    return takeImportValue(anchor.node, source.take);
+  }
+  if (source.element === "class" && anchor.kind === "class") {
+    return takeClassValue(anchor.node, source.take);
+  }
   return "";
 }
 
@@ -156,6 +162,38 @@ function takeVariableValue(node, take) {
   }
   if (take === "value") {
     return traceValue(node.getInitializer());
+  }
+  return "";
+}
+
+function takeImportValue(node, take) {
+  if (take === "module" || take === "value") {
+    return node.getModuleSpecifierValue();
+  }
+  if (take === "default") {
+    return node.getDefaultImport()?.getText() ?? "";
+  }
+  if (take === "namespace") {
+    return node.getNamespaceImport()?.getText() ?? "";
+  }
+  if (take === "named") {
+    return node.getNamedImports().map((namedImport) => namedImport.getName()).join(",");
+  }
+  if (take === "raw") {
+    return node.getText();
+  }
+  return "";
+}
+
+function takeClassValue(node, take) {
+  if (take === "name" || take === "value") {
+    return node.getName() ?? "";
+  }
+  if (take === "extends") {
+    return node.getExtends()?.getExpression().getText() ?? "";
+  }
+  if (take === "raw") {
+    return node.getText();
   }
   return "";
 }

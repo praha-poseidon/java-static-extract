@@ -10,6 +10,8 @@ find jsx <tagName>
 find call <callee>
 find function <name>
 find variable <name>
+find import <moduleSpecifier>
+find class <name>
 ```
 
 Examples:
@@ -22,6 +24,8 @@ find call axios.post
 find call request
 find function handleSave
 find variable API_PATH
+find import react
+find class UserPanel
 ```
 
 ## Supported Sources
@@ -43,6 +47,14 @@ from return take raw
 from variable take name
 from variable take value
 from variable take raw
+from import take module
+from import take default
+from import take namespace
+from import take named
+from import take raw
+from class take name
+from class take extends
+from class take raw
 ```
 
 ## Value Tracing

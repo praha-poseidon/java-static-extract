@@ -14,6 +14,12 @@ export function findAnchors(rule, model) {
   if (kind === "variable") {
     return variableAnchors(model, name);
   }
+  if (kind === "import") {
+    return importAnchors(model, name);
+  }
+  if (kind === "class") {
+    return classAnchors(model, name);
+  }
   return [];
 }
 
@@ -63,6 +69,20 @@ function variableAnchors(model, name) {
     .getDescendantsOfKind(SyntaxKind.VariableDeclaration)
     .filter((node) => matches(node.getName(), name))
     .map((node) => anchor("variable", node.getName(), node));
+}
+
+function importAnchors(model, name) {
+  return model.sourceFile
+    .getDescendantsOfKind(SyntaxKind.ImportDeclaration)
+    .filter((node) => matches(node.getModuleSpecifierValue(), name))
+    .map((node) => anchor("import", node.getModuleSpecifierValue(), node));
+}
+
+function classAnchors(model, name) {
+  return model.sourceFile
+    .getDescendantsOfKind(SyntaxKind.ClassDeclaration)
+    .filter((node) => node.getName() && matches(node.getName(), name))
+    .map((node) => anchor("class", node.getName(), node));
 }
 
 function anchor(kind, name, node, declaration = null) {

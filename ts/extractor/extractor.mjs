@@ -141,6 +141,8 @@ async function collectSourceFacts(sourceFiles, projectRoot) {
     facts.push(...callFacts(model, sourceFile, projectRoot));
     facts.push(...functionFacts(model, sourceFile, projectRoot));
     facts.push(...variableFacts(model, sourceFile, projectRoot));
+    facts.push(...importFacts(model, sourceFile, projectRoot));
+    facts.push(...classFacts(model, sourceFile, projectRoot));
   }
   return facts;
 }
@@ -181,6 +183,28 @@ function variableFacts(model, sourceFile, projectRoot) {
     kind: "variable",
     name: anchor.name,
     value: traceValue(anchor.node.getInitializer()),
+    raw: anchor.raw,
+    ...locationFields(model, sourceFile, projectRoot, anchor)
+  }));
+}
+
+function importFacts(model, sourceFile, projectRoot) {
+  return findAnchors({ find: { kind: "import", name: "*" } }, model).map((anchor) => ({
+    kind: "import",
+    module: anchor.node.getModuleSpecifierValue(),
+    defaultImport: anchor.node.getDefaultImport()?.getText() ?? "",
+    namespaceImport: anchor.node.getNamespaceImport()?.getText() ?? "",
+    namedImports: anchor.node.getNamedImports().map((namedImport) => namedImport.getName()),
+    raw: anchor.raw,
+    ...locationFields(model, sourceFile, projectRoot, anchor)
+  }));
+}
+
+function classFacts(model, sourceFile, projectRoot) {
+  return findAnchors({ find: { kind: "class", name: "*" } }, model).map((anchor) => ({
+    kind: "class",
+    name: anchor.name,
+    extends: anchor.node.getExtends()?.getExpression().getText() ?? "",
     raw: anchor.raw,
     ...locationFields(model, sourceFile, projectRoot, anchor)
   }));
