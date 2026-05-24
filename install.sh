@@ -151,7 +151,7 @@ install_java_cli() {
 install_ts_cli() {
   check_ts_prerequisites
 
-  local source_bin="$ROOT_DIR/ts/runtime/bin/static-extract-ts.mjs"
+  local source_bin="$ROOT_DIR/ts/runtime/cli/static-extract-ts.mjs"
   if [[ ! -f "$source_bin" ]]; then
     die "TS CLI script was not found: $source_bin"
   fi

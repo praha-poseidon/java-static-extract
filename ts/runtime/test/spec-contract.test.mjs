@@ -23,7 +23,7 @@ for (const rule of manifest.rules) {
   assert.ok(existsSync(resolve(root, "rules", rule)), `Missing rule: ${rule}`);
 }
 
-const help = execFileSync("node", [resolve(root, "bin/static-extract-ts.mjs"), "--help"], { encoding: "utf8" });
+const help = execFileSync("node", [resolve(root, "cli/static-extract-ts.mjs"), "--help"], { encoding: "utf8" });
 assert.match(help, /Usage: static-extract-ts/);
 assert.match(help, /init/);
 assert.match(help, /try/);
@@ -31,7 +31,7 @@ assert.match(help, /diagnose/);
 
 const initProject = mkdtempSync(resolve(tmpdir(), "static-extract-ts-init-"));
 const initReport = execFileSync("node", [
-  resolve(root, "bin/static-extract-ts.mjs"),
+  resolve(root, "cli/static-extract-ts.mjs"),
   "init",
   "--project", initProject
 ], { encoding: "utf8" });
@@ -58,7 +58,7 @@ function assertExample(example) {
     .map((line) => JSON.parse(line.replaceAll("${EXAMPLE_DIR}", example)));
   const output = resolve(mkdtempSync(resolve(tmpdir(), "static-extract-ts-")), "facts.jsonl");
   const tryReport = execFileSync("node", [
-    resolve(root, "bin/static-extract-ts.mjs"),
+    resolve(root, "cli/static-extract-ts.mjs"),
     "try",
     "--project", example,
     "--source", resolve(example, "input"),
@@ -81,7 +81,7 @@ build {
 }
 `);
   const diagnoseReport = execFileSync("node", [
-    resolve(root, "bin/static-extract-ts.mjs"),
+    resolve(root, "cli/static-extract-ts.mjs"),
     "diagnose",
     "--project", example,
     "--source", resolve(example, "input"),
@@ -91,7 +91,7 @@ build {
   assert.match(diagnoseReport, /"sourceFacts"/);
 
   const report = execFileSync("node", [
-    resolve(root, "bin/static-extract-ts.mjs"),
+    resolve(root, "cli/static-extract-ts.mjs"),
     "run",
     "--project", example,
     "--source", resolve(example, "input"),
@@ -110,7 +110,7 @@ build {
 
 const buttonExample = resolve(repo, "spec/examples/ts/react-button-text");
 const buttonBuiltinReport = execFileSync("node", [
-  resolve(root, "bin/static-extract-ts.mjs"),
+  resolve(root, "cli/static-extract-ts.mjs"),
   "run",
   "--project", buttonExample,
   "--source", resolve(buttonExample, "input"),
@@ -120,7 +120,7 @@ assert.match(buttonBuiltinReport, /"resultCount": 2/);
 
 const apiExample = resolve(repo, "spec/examples/ts/api-call");
 const apiBuiltinReport = execFileSync("node", [
-  resolve(root, "bin/static-extract-ts.mjs"),
+  resolve(root, "cli/static-extract-ts.mjs"),
   "run",
   "--project", apiExample,
   "--source", resolve(apiExample, "input"),

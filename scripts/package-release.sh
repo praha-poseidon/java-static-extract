@@ -38,8 +38,8 @@ mkdir -p "$PACKAGE_DIR/bin" "$PACKAGE_DIR/runtime-ts" "$DIST_DIR"
 
 cp -R "$ROOT_DIR/java/cli/target/appassembler/bin/." "$PACKAGE_DIR/bin/"
 cp -R "$ROOT_DIR/java/cli/target/appassembler/repo" "$PACKAGE_DIR/repo"
-cp -R "$ROOT_DIR/ts/runtime/bin" "$PACKAGE_DIR/runtime-ts/"
-cp -R "$ROOT_DIR/ts/runtime/src" "$PACKAGE_DIR/runtime-ts/"
+cp -R "$ROOT_DIR/ts/runtime/cli" "$PACKAGE_DIR/runtime-ts/"
+cp -R "$ROOT_DIR/ts/runtime/runtime" "$PACKAGE_DIR/runtime-ts/"
 cp -R "$ROOT_DIR/ts/runtime/rules" "$PACKAGE_DIR/runtime-ts/"
 cp -R "$ROOT_DIR/ts/runtime/node_modules" "$PACKAGE_DIR/runtime-ts/"
 cp "$ROOT_DIR/ts/runtime/package.json" "$PACKAGE_DIR/runtime-ts/"
@@ -63,13 +63,13 @@ while [ -h "$PRG" ]; do
 done
 PRGDIR=`dirname "$PRG"`
 BASEDIR=`cd "$PRGDIR/.." >/dev/null; pwd`
-exec node "$BASEDIR/runtime-ts/bin/static-extract-ts.mjs" "$@"
+exec node "$BASEDIR/runtime-ts/cli/static-extract-ts.mjs" "$@"
 EOF
 
 chmod +x "$PACKAGE_DIR/install.sh" \
   "$PACKAGE_DIR/bin/static-extract-java" \
   "$PACKAGE_DIR/bin/static-extract-ts" \
-  "$PACKAGE_DIR/runtime-ts/bin/static-extract-ts.mjs" \
+  "$PACKAGE_DIR/runtime-ts/cli/static-extract-ts.mjs" \
   "$PACKAGE_DIR/skills/ser-author/scripts/generate_ser.mjs" \
   "$PACKAGE_DIR/skills/ser-author/scripts/run_static_extract.mjs"
 

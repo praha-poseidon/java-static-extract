@@ -30,7 +30,7 @@ assert.match(generated, /find jsx button/);
 assert.match(generated, /from jsx button take text/);
 
 const report = execFileSync("node", [
-  resolve(root, "bin/static-extract-ts.mjs"),
+  resolve(root, "cli/static-extract-ts.mjs"),
   "run",
   "--project", example,
   "--source", resolve(example, "input"),

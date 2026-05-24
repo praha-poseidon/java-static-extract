@@ -12,17 +12,19 @@ does not depend on the Java core jar.
 
 ```bash
 npm test
-node bin/static-extract-ts.mjs --help
-node bin/static-extract-ts.mjs run --project ./app --builtin --out facts.jsonl
+node cli/static-extract-ts.mjs --help
+node cli/static-extract-ts.mjs run --project ./app --builtin --out facts.jsonl
 ```
 
 ## Architecture
 
 ```text
-src/rule-parser.mjs      SER subset parser used by this runtime
-src/ast-model.mjs        ts-morph SourceFile creation
-src/find-executor.mjs    find jsx/call/function/variable
-src/source-evaluator.mjs from/take evaluation
-src/value-tracer.mjs     syntax-only value tracing
-src/runtime.mjs          CLI-facing orchestration
+cli/static-extract-ts.mjs    command line entry point
+runtime/rule-parser.mjs      SER subset parser used by this runtime
+runtime/ast-model.mjs        ts-morph SourceFile creation
+runtime/find-executor.mjs    find jsx/call/function/variable
+runtime/source-evaluator.mjs from/take evaluation
+runtime/value-tracer.mjs     syntax-only value tracing
+runtime/runtime.mjs          extraction orchestration
+rules/                       built-in TS/React SER rules
 ```

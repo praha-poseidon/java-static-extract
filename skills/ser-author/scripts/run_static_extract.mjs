@@ -63,7 +63,7 @@ async function detectRuntime(project) {
 
 function runExtract(runtime, project, rule, factsFile, options) {
   if (runtime === "react") {
-    const cli = options.cliTs ? resolve(options.cliTs) : resolve(repo, "ts/runtime/bin/static-extract-ts.mjs");
+    const cli = options.cliTs ? resolve(options.cliTs) : resolve(repo, "ts/runtime/cli/static-extract-ts.mjs");
     const initReport = runJson("node", [
       cli,
       "init",

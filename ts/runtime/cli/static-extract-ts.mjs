@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { diagnose, init, run, tryRules } from "../src/runtime.mjs";
+import { diagnose, init, run, tryRules } from "../runtime/runtime.mjs";
 
 const USAGE = `Usage: static-extract-ts <command> [options]
 
