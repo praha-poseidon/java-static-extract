@@ -155,10 +155,14 @@ install_ts_cli() {
   if [[ ! -f "$source_bin" ]]; then
     die "TS CLI script was not found: $source_bin"
   fi
-  if [[ ! -d "$ROOT_DIR/ts/node_modules/ts-morph" ]]; then
+  if [[ ! -d "$ROOT_DIR/ts/node_modules/ts-morph" || ! -d "$ROOT_DIR/ts/node_modules/antlr4ng" ]]; then
     command_exists npm || die "npm was not found. Source install needs npm to install TS extractor dependencies."
     echo "Installing static-extract-ts dependencies..."
     (cd "$ROOT_DIR/ts" && npm install)
+  fi
+  if [[ ! -f "$ROOT_DIR/ts/dist/extractor/antlr-ser-parser.js" ]]; then
+    echo "Building static-extract-ts generated SER parser..."
+    (cd "$ROOT_DIR/ts" && npm run build)
   fi
 
   chmod +x "$source_bin"

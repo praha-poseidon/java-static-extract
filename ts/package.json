@@ -8,12 +8,19 @@
     "static-extract-ts": "./cli/static-extract-ts.mjs"
   },
   "scripts": {
-    "test": "node test/spec-contract.test.mjs && node test/e2e-ser-authoring.test.mjs"
+    "generate:ser-parser": "antlr-ng -D language=TypeScript -v -o src/generated/ser ../spec/ser/Ser.g4",
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node test/spec-contract.test.mjs && node test/e2e-ser-authoring.test.mjs"
   },
   "dependencies": {
+    "antlr4ng": "^3.0.16",
     "ts-morph": "^24.0.0"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "antlr-ng": "^1.0.10",
+    "typescript": "^6.0.3"
   }
 }

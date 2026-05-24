@@ -18,6 +18,10 @@ Shared extraction options:
   --rule <file>        SER rule file. Can be repeated.
   --rule-dir <dir>     Directory containing .ser rule files. Can be repeated.
   --rules <dir>        Alias for --rule-dir.
+  --trace-rule <file>  SER trace rule file. Can be repeated.
+  --trace-rules <dir>  Directory containing .ser trace rule files. Can be repeated.
+  --external-values <file>
+                       JSON file with external trace values.
   --builtin            Load rules owned by this TypeScript extractor.
 
 Run options:
@@ -84,7 +88,10 @@ function parseExtractionOptions(argv, allowOutput = false) {
     sources: [],
     ruleFiles: [],
     ruleDirectories: [],
+    traceRuleFiles: [],
+    traceRuleDirectories: [],
     builtinRules: false,
+    externalValuesFile: undefined,
     outputFile: undefined
   };
   for (let i = 0; i < argv.length; i++) {
@@ -103,6 +110,15 @@ function parseExtractionOptions(argv, allowOutput = false) {
       case "--rules":
       case "--rule-dir":
         options.ruleDirectories.push(requireValue(argv, ++i, arg));
+        break;
+      case "--trace-rule":
+        options.traceRuleFiles.push(requireValue(argv, ++i, arg));
+        break;
+      case "--trace-rules":
+        options.traceRuleDirectories.push(requireValue(argv, ++i, arg));
+        break;
+      case "--external-values":
+        options.externalValuesFile = requireValue(argv, ++i, arg);
         break;
       case "--builtin":
         options.builtinRules = true;

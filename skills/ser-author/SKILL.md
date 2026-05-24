@@ -15,8 +15,10 @@ project, or do both as one extraction workflow.
 2. Read the matching vocabulary reference before writing SER:
    - Java/JDT: `references/java-jdt-vocabulary.md`
    - React/TS: `references/react-ts-vocabulary.md`
-3. Generate one `.ser` file containing the needed `rule` and optional `trace`
-   blocks. Do not split rule and trace into separate files unless the user asks.
+3. Generate the needed `rule` SER. For Java/JDT workflows, related `trace`
+   blocks may live in the same `.ser` file. For TS CLI workflows, write
+   trace-ser as a separate file and pass it with `--trace-rule` or
+   `--trace-rules`.
 4. If source code is available and the user wants extraction, run the matching
    CLI workflow: `init`, `try`, `diagnose` if `try` has no matches, then `run`.
 5. Return the generated SER path, JSONL facts path, and report path.

@@ -190,6 +190,10 @@ nameItem
     | ASSIGNMENT
     | NEW
     | LITERAL
+    | KEY
+    | DEFAULT
+    | OWNER
+    | SIGNATURE
     ;
 
 literal

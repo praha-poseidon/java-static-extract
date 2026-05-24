@@ -71,6 +71,11 @@ Static Extract 当前可以做这些事：
 - Use trace rules to resolve external configuration values such as
   `@Value("${...}")` and `Environment.getProperty(...)`.
 - 使用 trace 规则解析外部配置值，例如 `@Value("${...}")` 和 `Environment.getProperty(...)`。
+- Parse SER and trace-ser from the shared `spec/ser/Ser.g4` grammar in both
+  Java and TS extractors. Java/JDT has the fuller trace resolver surface today;
+  TS now supports trace-ser continuation for syntax-level call values and
+  external value lookup.
+- Java 和 TS extractor 都从共享的 `spec/ser/Ser.g4` 解析 SER 和 trace-ser。当前 Java/JDT 的 trace resolver 能力更完整；TS 已支持语法级 call value 的 trace-ser 继续解析和 external-values 查找。
 - Build arbitrary output fields as `Map<String, String>`.
 - 通过 `build` 生成任意输出字段，最终得到 `Map<String, String>`。
 - Let users provide their own extract rules, trace rules, external value
@@ -248,10 +253,13 @@ static-extract-0.0.1/
   extractor-ts/
     cli/
     extractor/
+    dist/
     rules/
+    src/
     node_modules/
     package.json
     package-lock.json
+    tsconfig.json
   skills/
     static-extract/
     ser-author/

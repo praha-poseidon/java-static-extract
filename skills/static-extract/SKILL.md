@@ -42,7 +42,9 @@ reuse SER rules, run them, and iterate.
    - SER syntax: `references/ser-cheatsheet.md`
    - TS/React: `references/react-ts-vocabulary.md`
 7. If target values may depend on extractor configuration, prepare an
-   external-values JSON file. Read `references/external-values.md`.
+   external-values JSON file. Java/JDT has the fuller trace resolver surface.
+   TS supports trace-ser continuation for syntax-level call values and
+   external value lookup. Read `references/external-values.md`.
 8. Write generated rules under:
    ```text
    /path/to/project/.ser/generated
@@ -65,7 +67,7 @@ reuse SER rules, run them, and iterate.
    static-extract-ts run --project /path/to/project --source /path/to/project/src --rule /path/to/project/.ser/generated/name.ser --out /path/to/project/.ser/result/extract.jsonl
    ```
 
-One `.ser` file may contain both `rule ...` and `trace ...` blocks. Prefer one generated file per extraction goal, with the rule and its trace helpers together when they are related.
+One `.ser` file may contain both `rule ...` and `trace ...` blocks for Java/JDT workflows. For TS CLI execution, pass trace-ser files through `--trace-rule` or `--trace-rules`.
 
 ## Rule Writing
 

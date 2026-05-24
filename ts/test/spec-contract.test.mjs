@@ -52,6 +52,10 @@ for (const example of examples) {
 }
 
 function assertExample(example) {
+  const traceRule = resolve(example, "trace.ser");
+  const externalValues = resolve(example, "external-values.json");
+  const traceArgs = existsSync(traceRule) ? ["--trace-rule", traceRule] : [];
+  const externalValueArgs = existsSync(externalValues) ? ["--external-values", externalValues] : [];
   const expectedLines = readFileSync(resolve(example, "expected.jsonl"), "utf8")
     .trim()
     .split("\n")
@@ -62,7 +66,9 @@ function assertExample(example) {
     "try",
     "--project", example,
     "--source", resolve(example, "input"),
-    "--rule", resolve(example, "rule.ser")
+    "--rule", resolve(example, "rule.ser"),
+    ...traceArgs,
+    ...externalValueArgs
   ], { encoding: "utf8" });
   assert.match(tryReport, /"status": "MATCH"/);
   assert.match(tryReport, new RegExp(`"resultCount": ${expectedLines.length}`));
@@ -85,7 +91,9 @@ build {
     "diagnose",
     "--project", example,
     "--source", resolve(example, "input"),
-    "--rule", missingRule
+    "--rule", missingRule,
+    ...traceArgs,
+    ...externalValueArgs
   ], { encoding: "utf8" });
   assert.match(diagnoseReport, /"status": "NO_MATCH"/);
   assert.match(diagnoseReport, /"sourceFacts"/);
@@ -96,6 +104,8 @@ build {
     "--project", example,
     "--source", resolve(example, "input"),
     "--rule", resolve(example, "rule.ser"),
+    ...traceArgs,
+    ...externalValueArgs,
     "--out", output
   ], { encoding: "utf8" });
   assert.match(report, new RegExp(`"resultCount": ${expectedLines.length}`));

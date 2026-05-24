@@ -32,6 +32,9 @@ echo "Building Java CLI distribution..."
 echo "Installing TS extractor dependencies..."
 (cd "$ROOT_DIR/ts" && npm ci)
 
+echo "Building TS extractor generated SER parser..."
+(cd "$ROOT_DIR/ts" && npm run build)
+
 echo "Assembling release package: $PACKAGE_NAME"
 rm -rf "$PACKAGE_DIR"
 mkdir -p "$PACKAGE_DIR/bin" "$PACKAGE_DIR/extractor-ts" "$DIST_DIR"
@@ -40,8 +43,11 @@ cp -R "$ROOT_DIR/java/cli/target/appassembler/bin/." "$PACKAGE_DIR/bin/"
 cp -R "$ROOT_DIR/java/cli/target/appassembler/repo" "$PACKAGE_DIR/repo"
 cp -R "$ROOT_DIR/ts/cli" "$PACKAGE_DIR/extractor-ts/"
 cp -R "$ROOT_DIR/ts/extractor" "$PACKAGE_DIR/extractor-ts/"
+cp -R "$ROOT_DIR/ts/dist" "$PACKAGE_DIR/extractor-ts/"
 cp -R "$ROOT_DIR/ts/rules" "$PACKAGE_DIR/extractor-ts/"
+cp -R "$ROOT_DIR/ts/src" "$PACKAGE_DIR/extractor-ts/"
 cp -R "$ROOT_DIR/ts/node_modules" "$PACKAGE_DIR/extractor-ts/"
+cp "$ROOT_DIR/ts/tsconfig.json" "$PACKAGE_DIR/extractor-ts/"
 cp "$ROOT_DIR/ts/package.json" "$PACKAGE_DIR/extractor-ts/"
 cp "$ROOT_DIR/ts/package-lock.json" "$PACKAGE_DIR/extractor-ts/"
 cp -R "$ROOT_DIR/skills" "$PACKAGE_DIR/skills"

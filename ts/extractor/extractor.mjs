@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { Node, SyntaxKind } from "ts-morph";
 import { createAstModel } from "./ast-model.mjs";
 import { callName, callOwner, findAnchors } from "./find-executor.mjs";
-import { parseRule } from "./rule-parser.mjs";
+import { parseRule, parseTrace } from "./rule-parser.mjs";
 import { buildFields, evaluateLets, jsxAttribute, jsxTagName } from "./source-evaluator.mjs";
 import { referenceValue, traceValue } from "./value-tracer.mjs";
 
@@ -59,6 +59,7 @@ async function extract(request) {
   for (const file of ruleFiles) {
     rules.push(parseRule(await readFile(file, "utf8"), file));
   }
+  const traceOptions = await resolveTraceOptions(request);
   const sourceFiles = await resolveSourceFiles(request.sources);
   const results = [];
   for (const sourceFile of sourceFiles) {
@@ -66,7 +67,7 @@ async function extract(request) {
     const model = createAstModel(sourceFile, sourceText);
     for (const rule of rules) {
       for (const anchor of findAnchors(rule, model)) {
-        const values = evaluateLets(rule, anchor);
+        const values = evaluateLets(rule, anchor, traceOptions);
         results.push({
           rule: rule.name,
           factType: rule.factType,
@@ -95,6 +96,24 @@ async function resolveRuleFiles(request) {
     files.push(...manifest.rules.map((rule) => join(extractorRoot, "rules", rule)));
   }
   return [...new Set(files)].sort();
+}
+
+async function resolveTraceOptions(request) {
+  const traceFiles = [];
+  for (const file of request.traceRuleFiles ?? []) {
+    traceFiles.push(resolvePath(file));
+  }
+  for (const directory of request.traceRuleDirectories ?? []) {
+    traceFiles.push(...await scanFiles(resolvePath(directory), [".ser"]));
+  }
+  const traceRuleSets = [];
+  for (const file of [...new Set(traceFiles)].sort()) {
+    traceRuleSets.push(parseTrace(await readFile(file, "utf8"), file));
+  }
+  const externalValues = request.externalValuesFile
+    ? JSON.parse(await readFile(resolvePath(request.externalValuesFile), "utf8"))
+    : {};
+  return { traceRuleSets, externalValues };
 }
 
 async function resolveSourceFiles(sources) {

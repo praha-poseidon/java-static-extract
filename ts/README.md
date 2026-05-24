@@ -11,6 +11,8 @@ does not depend on the Java core jar.
 ## Commands
 
 ```bash
+npm run generate:ser-parser
+npm run build
 npm test
 node cli/static-extract-ts.mjs --help
 node cli/static-extract-ts.mjs run --project ./app --builtin --out facts.jsonl
@@ -20,12 +22,16 @@ node cli/static-extract-ts.mjs run --project ./app --builtin --out facts.jsonl
 
 ```text
 cli/static-extract-ts.mjs    command line entry point
-extractor/rule-parser.mjs    SER subset parser used by this extractor
+src/generated/ser/           ANTLR TypeScript parser generated from spec/ser/Ser.g4
+src/extractor/antlr-ser-parser.ts
+                             maps generated parser trees to extractor rule models
+dist/                        compiled generated parser and parser adapter
+extractor/rule-parser.mjs    thin runtime wrapper around dist parser adapter
 extractor/ast-model.mjs      ts-morph SourceFile creation
 extractor/find-executor.mjs  find jsx/call/function/variable
 extractor/source-evaluator.mjs
                              from/take evaluation
-extractor/value-tracer.mjs   syntax-only value tracing
+extractor/value-tracer.mjs   syntax value tracing plus trace-ser continuation
 extractor/extractor.mjs      extraction orchestration
 rules/                       built-in TS/React SER rules
 ```

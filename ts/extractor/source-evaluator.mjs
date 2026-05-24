@@ -2,11 +2,11 @@ import { Node, SyntaxKind } from "ts-morph";
 import { callName, callOwner } from "./find-executor.mjs";
 import { referenceValue, traceValue } from "./value-tracer.mjs";
 
-export function evaluateLets(rule, anchor) {
+export function evaluateLets(rule, anchor, options = {}) {
   const values = {};
   for (const [name, sources] of Object.entries(rule.lets)) {
     for (const source of sources) {
-      const value = evaluateSource(source, anchor);
+      const value = evaluateSource(source, anchor, options);
       if (value !== "") {
         values[name] = value;
         break;
@@ -29,24 +29,24 @@ export function buildFields(rule, values) {
   return fields;
 }
 
-export function evaluateSource(source, anchor) {
+export function evaluateSource(source, anchor, options = {}) {
   if ((source.element === "children" || source.element === "jsx") && anchor.kind === "jsx") {
-    return takeJsxValue(anchor.node, source.take);
+    return takeJsxValue(anchor.node, source.take, options);
   }
   if (source.element === "prop" && anchor.kind === "jsx") {
-    return takePropValue(jsxAttribute(anchor.node, source.name), source.take);
+    return takePropValue(jsxAttribute(anchor.node, source.name), source.take, options);
   }
   if (source.element === "argument" && anchor.kind === "call") {
-    return takeArgumentValue(anchor.node.getArguments()[source.index], source.take);
+    return takeArgumentValue(anchor.node.getArguments()[source.index], source.take, options);
   }
   if (source.element === "call" && anchor.kind === "call") {
     return takeCallValue(anchor.node, source.take);
   }
   if (source.element === "return" && anchor.kind === "function") {
-    return takeReturnValue(anchor.node, source.take);
+    return takeReturnValue(anchor.node, source.take, options);
   }
   if (source.element === "variable" && anchor.kind === "variable") {
-    return takeVariableValue(anchor.node, source.take);
+    return takeVariableValue(anchor.node, source.take, options);
   }
   if (source.element === "import" && anchor.kind === "import") {
     return takeImportValue(anchor.node, source.take);
@@ -57,7 +57,7 @@ export function evaluateSource(source, anchor) {
   return "";
 }
 
-function takeJsxValue(node, take) {
+function takeJsxValue(node, take, options) {
   if (take === "name") {
     return jsxTagName(node);
   }
@@ -74,7 +74,7 @@ function takeJsxValue(node, take) {
           return child.getText();
         }
         if (Node.isJsxExpression(child) && child.getExpression()) {
-          return traceValue(child.getExpression());
+          return traceValue(child.getExpression(), options);
         }
         return "";
       })
@@ -85,7 +85,7 @@ function takeJsxValue(node, take) {
   return "";
 }
 
-function takePropValue(attribute, take) {
+function takePropValue(attribute, take, options) {
   if (!attribute) {
     return "";
   }
@@ -104,12 +104,12 @@ function takePropValue(attribute, take) {
   }
   if (Node.isJsxExpression(initializer)) {
     const expression = initializer.getExpression();
-    return take === "reference" ? referenceValue(expression) : traceValue(expression);
+    return take === "reference" ? referenceValue(expression) : traceValue(expression, options);
   }
   return initializer.getText();
 }
 
-function takeArgumentValue(argument, take) {
+function takeArgumentValue(argument, take, options) {
   if (!argument) {
     return "";
   }
@@ -117,7 +117,7 @@ function takeArgumentValue(argument, take) {
     return argument.getText();
   }
   if (take === "value") {
-    return traceValue(argument);
+    return traceValue(argument, options);
   }
   return "";
 }
@@ -139,7 +139,7 @@ function takeCallValue(node, take) {
   return "";
 }
 
-function takeReturnValue(node, take) {
+function takeReturnValue(node, take, options) {
   const expression = firstReturnExpression(node);
   if (!expression) {
     return "";
@@ -148,12 +148,12 @@ function takeReturnValue(node, take) {
     return expression.getText();
   }
   if (take === "value") {
-    return traceValue(expression);
+    return traceValue(expression, options);
   }
   return "";
 }
 
-function takeVariableValue(node, take) {
+function takeVariableValue(node, take, options) {
   if (take === "name") {
     return node.getName();
   }
@@ -161,7 +161,7 @@ function takeVariableValue(node, take) {
     return node.getText();
   }
   if (take === "value") {
-    return traceValue(node.getInitializer());
+    return traceValue(node.getInitializer(), options);
   }
   return "";
 }
