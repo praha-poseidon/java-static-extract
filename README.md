@@ -108,7 +108,7 @@ java/cli
   Picocli based command line entry point over the assistant workflow API.
   基于 picocli 的命令行入口，底层调用 assistant 工作流 API。
 
-ts/extractor
+ts
   Node-based CLI and TypeScript/JavaScript AST extractor.
   基于 Node 的 CLI 和 TypeScript/JavaScript AST extractor。
 

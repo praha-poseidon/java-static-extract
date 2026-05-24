@@ -151,14 +151,14 @@ install_java_cli() {
 install_ts_cli() {
   check_ts_prerequisites
 
-  local source_bin="$ROOT_DIR/ts/extractor/cli/static-extract-ts.mjs"
+  local source_bin="$ROOT_DIR/ts/cli/static-extract-ts.mjs"
   if [[ ! -f "$source_bin" ]]; then
     die "TS CLI script was not found: $source_bin"
   fi
-  if [[ ! -d "$ROOT_DIR/ts/extractor/node_modules/ts-morph" ]]; then
+  if [[ ! -d "$ROOT_DIR/ts/node_modules/ts-morph" ]]; then
     command_exists npm || die "npm was not found. Source install needs npm to install TS extractor dependencies."
     echo "Installing static-extract-ts dependencies..."
-    (cd "$ROOT_DIR/ts/extractor" && npm install)
+    (cd "$ROOT_DIR/ts" && npm install)
   fi
 
   chmod +x "$source_bin"

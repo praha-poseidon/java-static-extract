@@ -31,7 +31,7 @@ java/jdt
 java/cli
   Java CLI over the Java/JDT extractor.
 
-ts/extractor
+ts
   TypeScript extractor and TypeScript CLI. Implements spec directly in TS.
   Does not depend on java/core.
 ```

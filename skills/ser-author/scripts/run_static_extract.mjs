@@ -63,7 +63,7 @@ async function detectExtractor(project) {
 
 function runExtract(extractor, project, rule, factsFile, options) {
   if (extractor === "react") {
-    const cli = options.cliTs ? resolve(options.cliTs) : resolve(repo, "ts/extractor/cli/static-extract-ts.mjs");
+    const cli = options.cliTs ? resolve(options.cliTs) : resolve(repo, "ts/cli/static-extract-ts.mjs");
     const initReport = runJson("node", [
       cli,
       "init",

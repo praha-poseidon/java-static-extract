@@ -1,6 +1,6 @@
 # React/TS Vocabulary
 
-Source of truth: `ts/extractor/vocabulary.md`.
+Source of truth: `ts/vocabulary.md`.
 
 Currently supported SER:
 

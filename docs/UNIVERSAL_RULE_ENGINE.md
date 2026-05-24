@@ -160,7 +160,7 @@ Initial extractor targets:
 java/jdt
   Java source through Eclipse JDT.
 
-ts/extractor
+ts
   TypeScript and TSX through the TypeScript compiler API or ts-morph.
 
 static-extract-extractor-vue

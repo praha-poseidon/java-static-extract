@@ -21,6 +21,6 @@ jobs:
           node-version: "20"
       - run: mvn -B verify
       - run: npm ci
-        working-directory: ts/extractor
+        working-directory: ts
       - run: npm test
-        working-directory: ts/extractor
+        working-directory: ts

@@ -29,7 +29,7 @@ jobs:
 
       - name: Test TS extractor
         run: npm ci && npm test
-        working-directory: ts/extractor
+        working-directory: ts
 
       - name: Package release distribution
         run: scripts/package-release.sh "${GITHUB_REF_NAME#v}"

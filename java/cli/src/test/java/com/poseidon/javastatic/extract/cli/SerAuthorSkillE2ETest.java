@@ -25,7 +25,7 @@ class SerAuthorSkillE2ETest {
         Path sourceExample = repo.resolve("spec/examples/java/annotation-fact");
         Path example = tempDir.resolve("annotation-fact-project");
         copyDirectory(sourceExample, example);
-        Path request = repo.resolve("ts/extractor/test/fixtures/ser-author-java-annotation/request.txt");
+        Path request = repo.resolve("ts/test/fixtures/ser-author-java-annotation/request.txt");
         Path outDir = tempDir.resolve("java-annotation");
 
         ProcessResult result = runNode(repo,
