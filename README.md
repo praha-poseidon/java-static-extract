@@ -153,7 +153,7 @@ Recommended install for normal users:
 
 ```bash
 curl -L -o static-extract.zip \
-  https://github.com/praha-poseidon/java-static-extract/releases/latest/download/static-extract.zip
+  https://github.com/praha-poseidon/static-extract/releases/latest/download/static-extract.zip
 unzip static-extract.zip
 cd static-extract-*
 bash install.sh
