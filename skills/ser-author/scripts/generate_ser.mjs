@@ -106,39 +106,39 @@ build {
 
 async function main(argv) {
   const options = parseArgs(argv);
-  if (!options.runtime || !options.request || !options.out) {
-    throw new Error("Usage: generate_ser.mjs --runtime <runtime> --request <file> --out <file>");
+  if (!options.extractor || !options.request || !options.out) {
+    throw new Error("Usage: generate_ser.mjs --extractor <extractor> --request <file> --out <file>");
   }
   const request = await readFile(options.request, "utf8");
-  const ser = generateSer(options.runtime, request);
+  const ser = generateSer(options.extractor, request);
   await mkdir(dirname(resolve(options.out)), { recursive: true });
   await writeFile(options.out, ser, "utf8");
 }
 
-export function generateSer(runtime, request) {
+export function generateSer(extractor, request) {
   const normalized = request.toLowerCase();
-  if (runtime === "react" && hasAny(normalized, ["action", "动作", "点击", "onclick", "handler", "处理函数"])) {
+  if (extractor === "react" && hasAny(normalized, ["action", "动作", "点击", "onclick", "handler", "处理函数"])) {
     return REACT_BUTTON_ACTION_SER;
   }
-  if (runtime === "react" && hasAny(normalized, ["button", "按钮"]) && hasAny(normalized, ["text", "文案", "中文"])) {
+  if (extractor === "react" && hasAny(normalized, ["button", "按钮"]) && hasAny(normalized, ["text", "文案", "中文"])) {
     return REACT_BUTTON_SER;
   }
-  if (runtime === "react" && hasAny(normalized, ["axios"])) {
+  if (extractor === "react" && hasAny(normalized, ["axios"])) {
     return REACT_AXIOS_API_SER;
   }
-  if (runtime === "react" && hasAny(normalized, ["fetch"])) {
+  if (extractor === "react" && hasAny(normalized, ["fetch"])) {
     return REACT_FETCH_API_SER;
   }
-  if (runtime === "react" && hasAny(normalized, ["api", "接口", "request", "请求", "call", "调用"])) {
+  if (extractor === "react" && hasAny(normalized, ["api", "接口", "request", "请求", "call", "调用"])) {
     return REACT_AXIOS_API_SER;
   }
-  if (runtime === "java-jdt" && hasAny(normalized, ["config", "configuration", "配置", "配置项", "config_key"])) {
+  if (extractor === "java-jdt" && hasAny(normalized, ["config", "configuration", "配置", "配置项", "config_key"])) {
     return JAVA_CONFIG_FIELD_SER;
   }
-  if (runtime === "java-jdt" && hasAny(normalized, ["annotation", "annotated", "注解", "endpoint", "端点", "接口", "backend"])) {
+  if (extractor === "java-jdt" && hasAny(normalized, ["annotation", "annotated", "注解", "endpoint", "端点", "接口", "backend"])) {
     return JAVA_ANNOTATION_FACT_SER;
   }
-  throw new Error(`Unsupported SER authoring request for runtime ${runtime}: ${request.trim()}`);
+  throw new Error(`Unsupported SER authoring request for extractor ${extractor}: ${request.trim()}`);
 }
 
 function hasAny(value, words) {
@@ -150,8 +150,8 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     switch (arg) {
-      case "--runtime":
-        options.runtime = requireValue(argv, ++i, arg);
+      case "--extractor":
+        options.extractor = requireValue(argv, ++i, arg);
         break;
       case "--request":
         options.request = requireValue(argv, ++i, arg);

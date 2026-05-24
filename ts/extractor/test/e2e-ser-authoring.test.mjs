@@ -19,7 +19,7 @@ cpSync(example, orchestratedProject, { recursive: true });
 
 execFileSync("node", [
   resolve(repo, "skills/ser-author/scripts/generate_ser.mjs"),
-  "--runtime", "react",
+  "--extractor", "react",
   "--request", requestFile,
   "--out", generatedRule
 ], { encoding: "utf8" });
@@ -53,7 +53,7 @@ const orchestrationReport = JSON.parse(execFileSync("node", [
   "--request", requestFile,
   "--out-dir", orchestratedDir
 ], { encoding: "utf8" }));
-assert.equal(orchestrationReport.runtime, "react");
+assert.equal(orchestrationReport.extractor, "react");
 assert.equal(orchestrationReport.extractReport.resultCount, 2);
 assert.equal(orchestrationReport.extractReport.tryReport.status, "MATCH");
 assert.ok(existsSync(resolve(orchestratedDir, "generated.ser")));
@@ -64,7 +64,7 @@ const reactActionRequest = resolve(root, "test/fixtures/ser-author-react-action/
 const reactActionRule = resolve(tempDir, "react-action.ser");
 execFileSync("node", [
   resolve(repo, "skills/ser-author/scripts/generate_ser.mjs"),
-  "--runtime", "react",
+  "--extractor", "react",
   "--request", reactActionRequest,
   "--out", reactActionRule
 ], { encoding: "utf8" });
@@ -74,7 +74,7 @@ const reactApiRequest = resolve(root, "test/fixtures/ser-author-react-api/reques
 const reactApiRule = resolve(tempDir, "react-api.ser");
 execFileSync("node", [
   resolve(repo, "skills/ser-author/scripts/generate_ser.mjs"),
-  "--runtime", "react",
+  "--extractor", "react",
   "--request", reactApiRequest,
   "--out", reactApiRule
 ], { encoding: "utf8" });

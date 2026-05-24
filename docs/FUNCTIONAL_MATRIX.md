@@ -1,8 +1,8 @@
 # Functional Capability Matrix
 
-Static Extract's current Java runtime is designed around Java/JDT elements, not framework-specific code paths.
+Static Extract's current Javan extractor is designed around Java/JDT elements, not framework-specific code paths.
 
-Static Extract 当前 Java runtime 的核心是 Java/JDT 元素能力，不是针对某个框架写死解析逻辑。
+Static Extract 当前 Javan extractor 的核心是 Java/JDT 元素能力，不是针对某个框架写死解析逻辑。
 
 The table below lists the generic capabilities that are covered by functional tests.
 
@@ -33,9 +33,9 @@ The table below lists the generic capabilities that are covered by functional te
 
 ## Real Project Validation
 
-A sibling consumer project verifies the Java runtime as an external dependency.
+A sibling consumer project verifies the Javan extractor as an external dependency.
 
-同级验证工程像普通用户一样引入 jar，从外部验证 Java runtime 能力。
+同级验证工程像普通用户一样引入 jar，从外部验证 Javan extractor 能力。
 
 It currently runs against:
 

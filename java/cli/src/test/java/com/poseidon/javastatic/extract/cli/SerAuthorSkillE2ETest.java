@@ -25,20 +25,20 @@ class SerAuthorSkillE2ETest {
         Path sourceExample = repo.resolve("spec/examples/java/annotation-fact");
         Path example = tempDir.resolve("annotation-fact-project");
         copyDirectory(sourceExample, example);
-        Path request = repo.resolve("ts/runtime/test/fixtures/ser-author-java-annotation/request.txt");
+        Path request = repo.resolve("ts/extractor/test/fixtures/ser-author-java-annotation/request.txt");
         Path outDir = tempDir.resolve("java-annotation");
 
         ProcessResult result = runNode(repo,
                 "skills/ser-author/scripts/run_static_extract.mjs",
                 "--project", example.toString(),
-                "--runtime", "java-jdt",
+                "--extractor", "java-jdt",
                 "--mode", "generate-and-extract",
                 "--request", request.toString(),
                 "--out-dir", outDir.toString());
 
         assertEquals(0, result.exitCode(), result.stderr());
         JsonNode report = SpecAssertions.OBJECT_MAPPER.readTree(result.stdout());
-        assertEquals("java-jdt", report.get("runtime").asText());
+        assertEquals("java-jdt", report.get("extractor").asText());
         assertEquals(1, report.at("/extractReport/resultCount").asInt());
         assertEquals("OK", report.at("/extractReport/tryReport/status").asText());
 

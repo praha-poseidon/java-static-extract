@@ -1,6 +1,6 @@
-# Static Extract TypeScript Runtime Vocabulary
+# Static Extract TypeScript Extractor Vocabulary
 
-This runtime is implemented on top of `ts-morph` and the TypeScript AST. SER
+This extractor is implemented on top of `ts-morph` and the TypeScript AST. SER
 selectors map to AST shapes instead of framework-specific branches.
 
 ## Supported Find Selectors
@@ -56,5 +56,5 @@ The first AST implementation supports syntax-only tracing for:
 - binary string concatenation with `+`
 - object property access for local object literals
 
-This runtime does not yet use the TypeScript type checker or cross-file symbol
+This extractor does not yet use the TypeScript type checker or cross-file symbol
 resolution.

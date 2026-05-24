@@ -3,7 +3,7 @@ package com.poseidon.javastatic.extract.assistant;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.poseidon.javastatic.extract.jdt.load.SerRuleLoader;
 import com.poseidon.javastatic.extract.jdt.project.JavaStaticExtractProjectRunner;
-import com.poseidon.javastatic.extract.runtime.ExtractedFact;
+import com.poseidon.javastatic.extract.extractor.ExtractedFact;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

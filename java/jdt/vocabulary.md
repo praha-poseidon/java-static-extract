@@ -1,8 +1,8 @@
-# Static Extract Java/JDT Runtime Vocabulary
+# Static Extract Java/JDT Extractor Vocabulary
 
 This file defines the main SER vocabulary currently implemented by the Java/JDT
-runtime. SER authoring tools and Skills must stay within this vocabulary unless
-they also update the runtime.
+extractor. SER authoring tools and Skills must stay within this vocabulary unless
+they also update the extractor.
 
 ## Find Selectors
 

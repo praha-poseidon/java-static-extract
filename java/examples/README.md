@@ -5,19 +5,19 @@ This module contains a runnable Java example project for
 
 这个模块提供可运行的 Java 示例项目，用来演示 `java/jdt`。
 
-The Java built-in rules live in the runtime module now:
+The Java built-in rules live in the extractor module now:
 
-Java 内置规则现在放在 runtime 模块下面：
+Java 内置规则现在放在 extractor 模块下面：
 
 ```text
 java/jdt/src/main/resources/static-extract/rules/
 java/jdt/src/main/resources/static-extract/traces/
 ```
 
-When this module runs tests, it uses those runtime-owned built-in rules through
+When this module runs tests, it uses those extractor-owned built-in rules through
 the normal classpath loader.
 
-这个模块跑测试时，会通过正常 classpath loader 使用 runtime 自己携带的内置规则。
+这个模块跑测试时，会通过正常 classpath loader 使用 extractor 自己携带的内置规则。
 
 Current examples:
 

@@ -126,7 +126,7 @@ let method =
 
 ## Trace Boundary
 
-Trace is used when the Java value points to a runtime value instead of a literal.
+Trace is used when the Java value points to an extractor value instead of a literal.
 
 Typical boundary forms include:
 

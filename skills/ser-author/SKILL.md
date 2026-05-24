@@ -1,6 +1,6 @@
 ---
 name: ser-author
-description: Generate Static Extract SER rules from natural-language extraction requests, using runtime vocabulary files, and optionally validate generated SER by running a Static Extract CLI against a target project.
+description: Generate Static Extract SER rules from natural-language extraction requests, using extractor vocabulary files, and optionally validate generated SER by running a Static Extract CLI against a target project.
 ---
 
 # SER Author
@@ -10,8 +10,8 @@ project, or do both as one extraction workflow.
 
 ## Workflow
 
-1. Identify the target runtime from the project or user request: Java/JDT,
-   React/TS, or another runtime.
+1. Identify the target extractor from the project or user request: Java/JDT,
+   React/TS, or another extractor.
 2. Read the matching vocabulary reference before writing SER:
    - Java/JDT: `references/java-jdt-vocabulary.md`
    - React/TS: `references/react-ts-vocabulary.md`
@@ -23,11 +23,11 @@ project, or do both as one extraction workflow.
 
 ## Guardrails
 
-- Stay inside the runtime vocabulary. Do not invent selectors such as
-  `find component` unless the target runtime vocabulary says it is supported.
+- Stay inside the extractor vocabulary. Do not invent selectors such as
+  `find component` unless the target extractor vocabulary says it is supported.
 - Prefer generic fact types such as `ui_text`, `api_call`, `config_key`, and
   `backend_endpoint`.
-- Keep output fields descriptive and runtime-neutral where possible.
+- Keep output fields descriptive and extractor-neutral where possible.
 - SER is the asset. The generated `.ser` should be reusable by a graph system
   or by CLI execution.
 
@@ -39,7 +39,7 @@ Generate SER only:
 
 ```bash
 node skills/ser-author/scripts/generate_ser.mjs \
-  --runtime react \
+  --extractor react \
   --request request.txt \
   --out generated.ser
 ```

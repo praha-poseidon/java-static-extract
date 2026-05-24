@@ -4,15 +4,15 @@
   "title": "Static Extract Rule Manifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["name", "runtime", "rules"],
+  "required": ["name", "extractor", "rules"],
   "properties": {
     "name": {
       "type": "string",
       "minLength": 1
     },
-    "runtime": {
+    "extractor": {
       "type": "string",
-      "description": "Runtime id such as java-jdt, ts-tsmorph, or vue-sfc."
+      "description": "Extractor id such as java-jdt, ts-tsmorph, or vue-sfc."
     },
     "version": {
       "type": "string"

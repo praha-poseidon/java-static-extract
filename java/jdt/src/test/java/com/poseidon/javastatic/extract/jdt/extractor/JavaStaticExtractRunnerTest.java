@@ -1,4 +1,4 @@
-package com.poseidon.javastatic.extract.jdt.runtime;
+package com.poseidon.javastatic.extract.jdt.extractor;
 
 import com.poseidon.javastatic.extract.jdt.StaticExtractResult;
 import com.poseidon.javastatic.extract.jdt.load.SerRuleLoader;
@@ -93,7 +93,7 @@ build {
     }
 
     @Test
-    void shipsJavaRuntimeRulesByDefault() {
+    void shipsJavaExtractorRulesByDefault() {
         JavaStaticExtractRunner runner = JavaStaticExtractRunner.builder().build();
 
         assertEquals(

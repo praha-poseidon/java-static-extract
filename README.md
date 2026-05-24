@@ -1,20 +1,20 @@
 # Static Extract
 
-Static Extract provides a language-neutral SER spec and per-language runtimes
-for extracting static facts from source code. The current implemented runtimes
-are Java/JDT and a React/TS runtime for button text and frontend API calls.
+Static Extract provides a language-neutral SER spec and per-language extractors
+for extracting static facts from source code. The current implemented extractors
+are Java/JDT and a React/TS extractor for button text and frontend API calls.
 
-Static Extract 提供一套语言无关的 SER 规范，以及面向不同语言的 runtime，用来从源码中静态提取信息。当前已经实现 Java/JDT runtime，以及支持按钮文案和前端 API 调用的 React/TS runtime。
+Static Extract 提供一套语言无关的 SER 规范，以及面向不同语言的 extractor，用来从源码中静态提取信息。当前已经实现 Java/JDT extractor，以及支持按钮文案和前端 API 调用的 React/TS extractor。
 
 It is designed for AI coding agents and other automation that needs reliable
 static facts instead of fragile text search.
 
 它面向 AI 编码 agent 和其他自动化场景，目标是提供可靠的静态事实，而不是依赖脆弱的文本搜索。
 
-Current status: `0.0.1-SNAPSHOT`, alpha. The spec and Java runtime are usable,
-but SER syntax and runtime APIs may still change before a stable release.
+Current status: `0.0.1-SNAPSHOT`, alpha. The spec and Javan extractor are usable,
+but SER syntax and extractor APIs may still change before a stable release.
 
-当前状态是 `0.0.1-SNAPSHOT`，alpha 阶段。规范和 Java runtime 已经可以使用，但在稳定版本之前，SER 语法和 runtime API 仍可能调整。
+当前状态是 `0.0.1-SNAPSHOT`，alpha 阶段。规范和 Javan extractor 已经可以使用，但在稳定版本之前，SER 语法和 extractor API 仍可能调整。
 
 ## Background
 
@@ -32,12 +32,12 @@ to extend. Static Extract separates the problem into three parts:
 把所有框架解析逻辑都写死在一个引擎里，会让引擎很难扩展。Static Extract 把问题拆成三层：
 
 - `spec/` defines the language-neutral SER, CLI, and JSON output contracts.
-- A runtime implements that spec in its own language.
-- A runtime CLI executes rules and writes extracted facts.
+- An extractor implements that spec in its own language.
+- An extractor CLI executes rules and writes extracted facts.
 
 - `spec/` 定义语言无关的 SER、CLI 和 JSON 输出契约。
-- 每个 runtime 用自己的语言实现这套规范。
-- runtime CLI 负责执行规则并输出提取事实。
+- 每个 extractor 用自己的语言实现这套规范。
+- extractor CLI 负责执行规则并输出提取事实。
 
 ## AI and Agent Use
 
@@ -77,15 +77,15 @@ Static Extract 当前可以做这些事：
   resolver, or JDT trace resolver.
 - 允许用户提供自己的提取规则、trace 规则、外部值解析器，或者自定义 JDT trace 解析逻辑。
 
-The Java runtime ships Java/JDT built-in rules such as Spring MVC,
-RestTemplate, and Spring config extraction. The TS runtime currently ships
+The Javan extractor ships Java/JDT built-in rules such as Spring MVC,
+RestTemplate, and Spring config extraction. The TS extractor currently ships
 React button text and frontend API call rules for `fetch` and `axios`.
 
-Java runtime 内置 Java/JDT 规则，例如 Spring MVC、RestTemplate、Spring config 提取。TS runtime 当前内置 React button 文案规则，以及 `fetch`、`axios` 前端 API 调用规则。
+Javan extractor 内置 Java/JDT 规则，例如 Spring MVC、RestTemplate、Spring config 提取。TS extractor 当前内置 React button 文案规则，以及 `fetch`、`axios` 前端 API 调用规则。
 
 ## Modules
 
-项目现在按 `spec/`、`java/`、`ts/`、`skills/` 和发布安装脚本分层。每个语言 runtime 自己实现 `spec/`，不通过 Java jar 互相调用。
+项目现在按 `spec/`、`java/`、`ts/`、`skills/` 和发布安装脚本分层。每个语言 extractor 自己实现 `spec/`，不通过 Java jar 互相调用。
 
 ```text
 spec
@@ -93,11 +93,11 @@ spec
   语言无关的 SER、CLI 和 JSON Schema 契约。
 
 java/core
-  Java implementation of SER parsing, rule models, and Java runtime contracts.
-  SER 解析、规则模型和 Java runtime contract 的 Java 实现。
+  Java implementation of SER parsing, rule models, and Javan extractor contracts.
+  SER 解析、规则模型和 Javan extractor contract 的 Java 实现。
 
 java/jdt
-  Eclipse JDT based runtime, loaders, value tracing, and build evaluators.
+  Eclipse JDT based extractor, loaders, value tracing, and build evaluators.
   基于 Eclipse JDT 执行规则，负责加载规则、追踪值、计算 build 输出。
 
 java/assistant
@@ -108,9 +108,9 @@ java/cli
   Picocli based command line entry point over the assistant workflow API.
   基于 picocli 的命令行入口，底层调用 assistant 工作流 API。
 
-ts/runtime
-  Node-based CLI and TypeScript/JavaScript AST runtime.
-  基于 Node 的 CLI 和 TypeScript/JavaScript AST runtime。
+ts/extractor
+  Node-based CLI and TypeScript/JavaScript AST extractor.
+  基于 Node 的 CLI 和 TypeScript/JavaScript AST extractor。
 
 skills/ser-author
   Agent Skill for generating SER and orchestrating CLI extraction.
@@ -161,11 +161,11 @@ static-extract-java --help
 static-extract-ts --help
 ```
 
-The release package contains CLI scripts, Java dependency jars, TS runtime
+The release package contains CLI scripts, Java dependency jars, TS extractor
 files, and agent skills. It does not need Maven or npm on the target machine.
 It only needs Java 21 or newer and Node.js 20 or newer.
 
-release 包已经包含 CLI 脚本、Java 依赖 jar、TS runtime 文件和 agent skills。目标机器不需要安装 Maven 或 npm，只需要 Java 21 或更新版本，以及 Node.js 20 或更新版本。
+release 包已经包含 CLI 脚本、Java 依赖 jar、TS extractor 文件和 agent skills。目标机器不需要安装 Maven 或 npm，只需要 Java 21 或更新版本，以及 Node.js 20 或更新版本。
 
 Source install for contributors:
 
@@ -245,9 +245,9 @@ static-extract-0.0.1/
     static-extract-ts
   repo/
     Java CLI jars and dependencies
-  runtime-ts/
-    bin/
-    src/
+  extractor-ts/
+    cli/
+    extractor/
     rules/
   skills/
     static-extract-java/
@@ -504,10 +504,10 @@ List<StaticTraceRuleSet> traces = loader.loadApplicationTraceRules();
 ```
 
 `loadAll()` loads application rules from `static-extract/rules/index.txt` when
-that resource exists. The runtime module does not ship framework rules by
+that resource exists. The extractor module does not ship framework rules by
 default.
 
-`loadAll()` 会读取应用 classpath 下的 `static-extract/rules/index.txt`。runtime 模块不默认携带 Spring MVC、RestTemplate 等框架规则。
+`loadAll()` 会读取应用 classpath 下的 `static-extract/rules/index.txt`。extractor 模块不默认携带 Spring MVC、RestTemplate 等框架规则。
 
 For explicit files:
 
@@ -630,7 +630,7 @@ trace 有两层扩展方式。
 
 - Implement `SerTraceRuleParser` when you want a different trace rule syntax
   that still produces `StaticTraceRuleSet`.
-- Implement `JdtTraceResolver` when the JDT runtime needs custom logic for a
+- Implement `JdtTraceResolver` when the JDT extractor needs custom logic for a
   stuck trace point that cannot be described by the default trace model.
 
 

@@ -67,13 +67,13 @@ The extract layer does not validate labels like `HTTP`, `CONFIG`, `inbound`, or 
 
 `endpoint` 会继续兼容，并输出到 `classifiers`。新的跨语言规则应该使用 `fact`。
 
-SER has a shared syntax skeleton and runtime-specific vocabulary. The Java JDT
-runtime currently implements Java words such as `method`, `annotation`,
-`field`, `argument`, and `return`. The parser can also preserve future runtime
+SER has a shared syntax skeleton and extractor-specific vocabulary. The Java JDT
+extractor currently implements Java words such as `method`, `annotation`,
+`field`, `argument`, and `return`. The parser can also preserve future extractor
 words such as `jsx`, `prop`, `children`, or `reference`, so TypeScript/Vue
-runtimes can interpret them without changing the core syntax.
+extractors can interpret them without changing the core syntax.
 
-SER 由统一语法骨架和 runtime 词汇组成。当前 Java JDT runtime 实现了 `method`、`annotation`、`field`、`argument`、`return` 等 Java 词汇。parser 也可以保留未来 runtime 的词汇，例如 `jsx`、`prop`、`children`、`reference`，这样 TypeScript/Vue runtime 可以在不改变 SER spec 的前提下解释它们。
+SER 由统一语法骨架和 extractor 词汇组成。当前 Java JDT extractor 实现了 `method`、`annotation`、`field`、`argument`、`return` 等 Java 词汇。parser 也可以保留未来 extractor 的词汇，例如 `jsx`、`prop`、`children`、`reference`，这样 TypeScript/Vue extractor 可以在不改变 SER spec 的前提下解释它们。
 
 Example fact rule:
 
@@ -245,7 +245,7 @@ from literal FIXED take value
 
 `take name` 读取名称。
 
-`take type` reads the Java type when the runtime can determine it.
+`take type` reads the Java type when the extractor can determine it.
 
 `take type` 读取 Java 类型，前提是运行时能判断出来。
 
@@ -257,7 +257,7 @@ from literal FIXED take value
 
 `take attr(...)` 按顺序读取注解属性。
 
-`take value` asks the runtime for the semantic value.
+`take value` asks the extractor for the semantic value.
 
 `take value` 表示让运行时读取语义值。
 
@@ -382,7 +382,7 @@ build {
 }
 ```
 
-The runtime flow is:
+The extractor flow is:
 
 运行流程是：
 
@@ -439,7 +439,7 @@ When no external value is found, `default` is used if the trace rule built one.
 
 如果查不到外部值，会使用 trace rule build 出来的 `default`。
 
-When no value and no default exist, the runtime returns `{lookup}` as an unresolved marker.
+When no value and no default exist, the extractor returns `{lookup}` as an unresolved marker.
 
 如果既没有外部值也没有默认值，运行时返回 `{lookup}` 作为未解析标记。
 

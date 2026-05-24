@@ -1,7 +1,7 @@
 package com.poseidon.javastatic.extract.jdt;
 
 import com.poseidon.javastatic.extract.rule.StaticExtractRule;
-import com.poseidon.javastatic.extract.runtime.ExtractedFact;
+import com.poseidon.javastatic.extract.extractor.ExtractedFact;
 import org.eclipse.jdt.core.dom.ASTNode;
 
 import java.util.Map;

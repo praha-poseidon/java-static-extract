@@ -22,7 +22,7 @@ Options:
 
 Environment:
   STATIC_EXTRACT_BIN_DIR           Default CLI install directory.
-  STATIC_EXTRACT_JAVA_BIN_DIR      Legacy Java runtime CLI install directory.
+  STATIC_EXTRACT_JAVA_BIN_DIR      Legacy Java extractor CLI install directory.
   JAVA_STATIC_EXTRACT_BIN_DIR      Legacy alias for the Java CLI install directory.
   CODEX_SKILLS_DIR                 Default: ~/.codex/skills
   CLAUDE_SKILLS_DIR                Default: ~/.claude/skills
@@ -130,7 +130,7 @@ check_ts_prerequisites() {
 
 install_java_cli() {
   check_cli_prerequisites
-  echo "Building static-extract Java runtime CLI..."
+  echo "Building static-extract Java extractor CLI..."
   (cd "$ROOT_DIR" && "$MVN_CMD" -pl java/cli -am package)
 
   local source_bin="$ROOT_DIR/java/cli/target/appassembler/bin/static-extract-java"
@@ -151,14 +151,14 @@ install_java_cli() {
 install_ts_cli() {
   check_ts_prerequisites
 
-  local source_bin="$ROOT_DIR/ts/runtime/cli/static-extract-ts.mjs"
+  local source_bin="$ROOT_DIR/ts/extractor/cli/static-extract-ts.mjs"
   if [[ ! -f "$source_bin" ]]; then
     die "TS CLI script was not found: $source_bin"
   fi
-  if [[ ! -d "$ROOT_DIR/ts/runtime/node_modules/ts-morph" ]]; then
-    command_exists npm || die "npm was not found. Source install needs npm to install TS runtime dependencies."
+  if [[ ! -d "$ROOT_DIR/ts/extractor/node_modules/ts-morph" ]]; then
+    command_exists npm || die "npm was not found. Source install needs npm to install TS extractor dependencies."
     echo "Installing static-extract-ts dependencies..."
-    (cd "$ROOT_DIR/ts/runtime" && npm install)
+    (cd "$ROOT_DIR/ts/extractor" && npm install)
   fi
 
   chmod +x "$source_bin"

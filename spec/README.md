@@ -2,21 +2,21 @@
 
 This directory is the language-neutral contract for Static Extract.
 
-It is intentionally not a Java module. Java, TypeScript, or any other runtime
+It is intentionally not a Java module. Java, TypeScript, or any other extractor
 should implement this contract in its own language and expose the same CLI and
 JSON output shape.
 
 ## Contents
 
-- `schema/extracted-fact.schema.json` defines the runtime output record.
+- `schema/extracted-fact.schema.json` defines the extractor output record.
 - `schema/rule-manifest.schema.json` defines a portable rule pack manifest.
-- `ser/Ser.g4` defines the SER grammar used by runtime parser implementations.
+- `ser/Ser.g4` defines the SER grammar used by extractor parser implementations.
 - `ser/SER_SPEC.md` defines the SER language semantics and conformance rules.
-- `cli/runtime-cli.md` defines the command shape each runtime CLI should expose.
-- `examples/` contains executable compatibility examples grouped by runtime
+- `cli/extractor-cli.md` defines the command shape each extractor CLI should expose.
+- `examples/` contains executable compatibility examples grouped by extractor
   language, with rules, sources, and expected JSONL output.
 
-## Runtime Relationship
+## Extractor Relationship
 
 ```text
 spec/
@@ -26,13 +26,13 @@ java/core
   Java implementation of SER parsing and Java rule model classes.
 
 java/jdt
-  Java/JDT runtime. Depends on java/core.
+  Java/JDT extractor. Depends on java/core.
 
 java/cli
-  Java CLI over the Java/JDT runtime.
+  Java CLI over the Java/JDT extractor.
 
-ts/runtime
-  TypeScript runtime and TypeScript CLI. Implements spec directly in TS.
+ts/extractor
+  TypeScript extractor and TypeScript CLI. Implements spec directly in TS.
   Does not depend on java/core.
 ```
 
@@ -40,7 +40,7 @@ The stable integration point across languages is JSON, not a shared Java jar.
 
 ## How Code Uses This Spec
 
-Runtimes should reference files in this directory from tests and release
+Extractors should reference files in this directory from tests and release
 checks. The spec is not only documentation.
 
 The Java CLI tests currently read:
@@ -59,11 +59,11 @@ The Java parser build copies:
 spec/ser/Ser.g4
 ```
 
-into the Java parser module before ANTLR generates parser code. Future runtimes
+into the Java parser module before ANTLR generates parser code. Future extractors
 should use the same grammar source or generated parser output for their own
 language.
 
-Future runtimes should do the same:
+Future extractors should do the same:
 
 ```text
 static-extract-ts run ... -> JSONL -> validate each line with extracted-fact.schema.json

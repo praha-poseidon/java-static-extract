@@ -19,7 +19,7 @@ async function main(argv) {
   const outDir = resolve(options.outDir);
   await mkdir(outDir, { recursive: true });
 
-  const runtime = options.runtime ?? await detectRuntime(project);
+  const extractor = options.extractor ?? await detectExtractor(project);
   const generatedRule = options.rule ? resolve(options.rule) : join(outDir, "generated.ser");
   const factsFile = options.out ?? join(outDir, "facts.jsonl");
   const reportFile = join(outDir, "report.json");
@@ -29,17 +29,17 @@ async function main(argv) {
       throw new Error("--request is required when mode generates SER.");
     }
     const request = readFileSync(resolve(options.request), "utf8");
-    await writeFile(generatedRule, generateSer(runtime, request), "utf8");
+    await writeFile(generatedRule, generateSer(extractor, request), "utf8");
   }
 
   let extractReport = null;
   if (options.mode === "extract" || options.mode === "generate-and-extract") {
     const rule = options.rule ? resolve(options.rule) : generatedRule;
-    extractReport = runExtract(runtime, project, rule, factsFile, options);
+    extractReport = runExtract(extractor, project, rule, factsFile, options);
   }
 
   const result = {
-    runtime,
+    extractor,
     mode: options.mode,
     serFile: generatedRule,
     factsFile: extractReport ? factsFile : null,
@@ -50,7 +50,7 @@ async function main(argv) {
   process.stdout.write(JSON.stringify(result, null, 2) + "\n");
 }
 
-async function detectRuntime(project) {
+async function detectExtractor(project) {
   const files = await scanFiles(project, [".tsx", ".jsx", ".ts", ".js", ".java"]);
   if (files.some((file) => [".tsx", ".jsx"].includes(extname(file)))) {
     return "react";
@@ -58,12 +58,12 @@ async function detectRuntime(project) {
   if (files.some((file) => extname(file) === ".java")) {
     return "java-jdt";
   }
-  throw new Error("Unable to detect runtime from project files.");
+  throw new Error("Unable to detect extractor from project files.");
 }
 
-function runExtract(runtime, project, rule, factsFile, options) {
-  if (runtime === "react") {
-    const cli = options.cliTs ? resolve(options.cliTs) : resolve(repo, "ts/runtime/cli/static-extract-ts.mjs");
+function runExtract(extractor, project, rule, factsFile, options) {
+  if (extractor === "react") {
+    const cli = options.cliTs ? resolve(options.cliTs) : resolve(repo, "ts/extractor/cli/static-extract-ts.mjs");
     const initReport = runJson("node", [
       cli,
       "init",
@@ -99,7 +99,7 @@ function runExtract(runtime, project, rule, factsFile, options) {
       resultCount: runReport.resultCount
     };
   }
-  if (runtime === "java-jdt") {
+  if (extractor === "java-jdt") {
     const command = javaCommand(options);
     const javaSources = scanFilesSync(project, [".java"]);
     if (javaSources.length === 0) {
@@ -138,7 +138,7 @@ function runExtract(runtime, project, rule, factsFile, options) {
       resultCount: runReport.resultCount
     };
   }
-  throw new Error(`Unsupported runtime: ${runtime}`);
+  throw new Error(`Unsupported extractor: ${extractor}`);
 }
 
 function runJson(command, args) {
@@ -268,8 +268,8 @@ function parseArgs(argv) {
       case "--rule":
         options.rule = requireValue(argv, ++i, arg);
         break;
-      case "--runtime":
-        options.runtime = requireValue(argv, ++i, arg);
+      case "--extractor":
+        options.extractor = requireValue(argv, ++i, arg);
         break;
       case "--cli-java":
         options.cliJava = requireValue(argv, ++i, arg);

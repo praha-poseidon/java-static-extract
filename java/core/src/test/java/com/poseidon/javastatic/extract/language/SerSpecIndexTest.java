@@ -17,7 +17,7 @@ class SerSpecIndexTest {
         assertTrue(readme.contains("ser/Ser.g4"));
         assertTrue(readme.contains("ser/SER_SPEC.md"));
         assertTrue(readme.contains("schema/extracted-fact.schema.json"));
-        assertTrue(readme.contains("cli/runtime-cli.md"));
+        assertTrue(readme.contains("cli/extractor-cli.md"));
     }
 
     private Path projectRoot() {

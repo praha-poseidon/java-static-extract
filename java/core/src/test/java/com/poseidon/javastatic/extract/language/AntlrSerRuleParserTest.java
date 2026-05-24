@@ -89,7 +89,7 @@ class AntlrSerRuleParserTest {
     }
 
     @Test
-    void preservesRuntimeVocabularyKindsForFutureRuntimes() {
+    void preservesExtractorVocabularyKindsForFutureExtractors() {
         String ser =
                 """
                 rule "React Button Action"

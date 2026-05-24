@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { diagnose, init, run, tryRules } from "../runtime/runtime.mjs";
+import { diagnose, init, run, tryRules } from "../extractor/extractor.mjs";
 
 const USAGE = `Usage: static-extract-ts <command> [options]
 
@@ -18,7 +18,7 @@ Shared extraction options:
   --rule <file>        SER rule file. Can be repeated.
   --rule-dir <dir>     Directory containing .ser rule files. Can be repeated.
   --rules <dir>        Alias for --rule-dir.
-  --builtin            Load rules owned by this TypeScript runtime.
+  --builtin            Load rules owned by this TypeScript extractor.
 
 Run options:
   --out <file>         Optional JSONL output file.

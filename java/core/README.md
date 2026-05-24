@@ -1,10 +1,10 @@
 # Static Extract Java Core
 
 This module is the Java implementation of the Static Extract SER parser, rule
-model, and Java runtime contracts.
+model, and Java extractor contracts.
 
 It is not the cross-language core. Cross-language contracts live in `../../spec`.
-Future non-Java runtimes should implement `spec/` directly in their own
+Future non-Java extractors should implement `spec/` directly in their own
 language instead of depending on this jar.
 
 The rule authoring model is intentionally small:
@@ -63,7 +63,7 @@ com.poseidon.javastatic.extract.language
   Public SER words and parser contracts.
   Examples: rule, endpoint, find, from, on, take, build.
   Ser.g4 defines the grammar; AntlrSerRuleParser turns text into the rule model.
-  RuleVocabulary describes runtime-specific words such as Java method/field or
+  RuleVocabulary describes extractor-specific words such as Java method/field or
   future TSX jsx/prop/children terms.
 
 com.poseidon.javastatic.extract.rule
@@ -80,8 +80,8 @@ com.poseidon.javastatic.extract.build
   It describes concat, references, constants, and build-time actions such as
   regex, replace, normalize, upper, lower, and map.
 
-com.poseidon.javastatic.extract.runtime
-  Java API contracts mirroring the language-neutral spec. Java runtimes such as
+com.poseidon.javastatic.extract.extractor
+  Java API contracts mirroring the language-neutral spec. Java extractors such as
   JDT implement these contracts without exposing AST terms to rule authors.
 ```
 
@@ -135,7 +135,7 @@ The language describes Java concepts, not JDT AST names:
 - `literal`
 
 Assignments and local variables are primarily internal tracing concepts. A rule
-usually says `take value`; the runtime then resolves variables, fields, string
+usually says `take value`; the extractor then resolves variables, fields, string
 concatenation, and supported configuration placeholders automatically.
 
 ## Value Semantics
@@ -176,7 +176,7 @@ find method Router.[get,post,put,delete,patch]
 find method KafkaTemplate.send
 ```
 
-The runtime decides whether a `method` rule means a declaration, such as a
+The extractor decides whether a `method` rule means a declaration, such as a
 Spring controller method with annotations, or an invocation, such as
 `Router.get(...)`, from the rest of the selector.
 

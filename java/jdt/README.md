@@ -1,4 +1,4 @@
-# Static Extract JDT Runtime
+# Static Extract JDT Extractor
 
 This module executes SER rules against Java source code through Eclipse JDT.
 
@@ -64,16 +64,16 @@ static-extract/rules/index.txt
 static-extract/traces/index.txt
 ```
 
-This runtime owns its Java built-in rules under:
+This extractor owns its Java built-in rules under:
 
 ```text
 src/main/resources/static-extract/rules/
 src/main/resources/static-extract/traces/
 ```
 
-`static-extract-java --builtin` loads those Java/JDT rules from the runtime
-classpath. Other runtimes should keep their own built-in rules beside their own
-runtime implementation.
+`static-extract-java --builtin` loads those Java/JDT rules from the extractor
+classpath. Other extractors should keep their own built-in rules beside their own
+extractor implementation.
 
 Entries in each index are relative paths under that directory.
 
@@ -88,7 +88,7 @@ every `*.ser` file directly.
 
 输出协议。
 
-The runtime returns Java objects. It does not force a JSON schema.
+The extractor returns Java objects. It does not force a JSON schema.
 
 运行时返回 Java 对象，不强制固定 JSON 结构。
 
@@ -126,7 +126,7 @@ com.poseidon.javastatic.extract.jdt.project
   项目级源码扫描和 JDT 解析入口。
 
 com.poseidon.javastatic.extract.jdt
-  Runtime engine and result type.
+  Extractor engine and result type.
   运行时引擎和结果类型。
 
 com.poseidon.javastatic.extract.jdt.find
@@ -146,7 +146,7 @@ com.poseidon.javastatic.extract.jdt.build
   执行 BuildSpec，生成最终输出字段。
 ```
 
-The runtime relies on JDT bindings for method-owner matching. It does not guess
+The extractor relies on JDT bindings for method-owner matching. It does not guess
 owner types from variable names when bindings are unavailable.
 
 运行时依赖 JDT binding 判断方法属于哪个类型。binding 不可用时，不会根据变量名猜测 owner 类型。
@@ -160,7 +160,7 @@ producing `StaticTraceRuleSet`.
 
 `SerTraceRuleParser` 允许调用方替换 trace 规则解析方式，但最终仍然产出 `StaticTraceRuleSet`。
 
-For JDT runtime behavior that cannot be represented by the default trace model,
+For JDT extractor behavior that cannot be represented by the default trace model,
 implement `JdtTraceResolver` and register it with the runner builder.
 
 如果某些 JDT 追踪行为无法用默认 trace 模型描述，可以实现 `JdtTraceResolver` 并注册到 runner builder。

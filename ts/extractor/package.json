@@ -1,9 +1,9 @@
 {
-  "name": "@static-extract/runtime-ts",
+  "name": "@static-extract/extractor-ts",
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "TypeScript/JavaScript AST runtime for Static Extract SER rules.",
+  "description": "TypeScript/JavaScript AST extractor for Static Extract SER rules.",
   "bin": {
     "static-extract-ts": "./cli/static-extract-ts.mjs"
   },

@@ -13,7 +13,7 @@ const schemaFile = resolve(repo, "spec/schema/extracted-fact.schema.json");
 assert.ok(existsSync(schemaFile));
 
 const manifest = JSON.parse(readFileSync(resolve(root, "rules/manifest.json"), "utf8"));
-assert.equal(manifest.runtime, "ts");
+assert.equal(manifest.extractor, "ts");
 assert.deepEqual(manifest.rules, [
   "react/axios-api-call.ser",
   "react/fetch-api-call.ser",
@@ -35,7 +35,7 @@ const initReport = execFileSync("node", [
   "init",
   "--project", initProject
 ], { encoding: "utf8" });
-assert.match(initReport, /"runtime": "ts"/);
+assert.match(initReport, /"extractor": "ts"/);
 assert.ok(existsSync(resolve(initProject, ".ser/generated")));
 assert.ok(existsSync(resolve(initProject, ".ser/rules")));
 assert.ok(existsSync(resolve(initProject, ".ser/out")));

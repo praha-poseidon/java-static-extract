@@ -29,21 +29,21 @@ command_exists zip || {
 echo "Building Java CLI distribution..."
 (cd "$ROOT_DIR" && mvn -B -pl java/cli -am package)
 
-echo "Installing TS runtime dependencies..."
-(cd "$ROOT_DIR/ts/runtime" && npm ci)
+echo "Installing TS extractor dependencies..."
+(cd "$ROOT_DIR/ts/extractor" && npm ci)
 
 echo "Assembling release package: $PACKAGE_NAME"
 rm -rf "$PACKAGE_DIR"
-mkdir -p "$PACKAGE_DIR/bin" "$PACKAGE_DIR/runtime-ts" "$DIST_DIR"
+mkdir -p "$PACKAGE_DIR/bin" "$PACKAGE_DIR/extractor-ts" "$DIST_DIR"
 
 cp -R "$ROOT_DIR/java/cli/target/appassembler/bin/." "$PACKAGE_DIR/bin/"
 cp -R "$ROOT_DIR/java/cli/target/appassembler/repo" "$PACKAGE_DIR/repo"
-cp -R "$ROOT_DIR/ts/runtime/cli" "$PACKAGE_DIR/runtime-ts/"
-cp -R "$ROOT_DIR/ts/runtime/runtime" "$PACKAGE_DIR/runtime-ts/"
-cp -R "$ROOT_DIR/ts/runtime/rules" "$PACKAGE_DIR/runtime-ts/"
-cp -R "$ROOT_DIR/ts/runtime/node_modules" "$PACKAGE_DIR/runtime-ts/"
-cp "$ROOT_DIR/ts/runtime/package.json" "$PACKAGE_DIR/runtime-ts/"
-cp "$ROOT_DIR/ts/runtime/package-lock.json" "$PACKAGE_DIR/runtime-ts/"
+cp -R "$ROOT_DIR/ts/extractor/cli" "$PACKAGE_DIR/extractor-ts/"
+cp -R "$ROOT_DIR/ts/extractor/extractor" "$PACKAGE_DIR/extractor-ts/"
+cp -R "$ROOT_DIR/ts/extractor/rules" "$PACKAGE_DIR/extractor-ts/"
+cp -R "$ROOT_DIR/ts/extractor/node_modules" "$PACKAGE_DIR/extractor-ts/"
+cp "$ROOT_DIR/ts/extractor/package.json" "$PACKAGE_DIR/extractor-ts/"
+cp "$ROOT_DIR/ts/extractor/package-lock.json" "$PACKAGE_DIR/extractor-ts/"
 cp -R "$ROOT_DIR/skills" "$PACKAGE_DIR/skills"
 cp -R "$ROOT_DIR/spec" "$PACKAGE_DIR/spec"
 cp "$ROOT_DIR/README.md" "$ROOT_DIR/LICENSE" "$PACKAGE_DIR/"
@@ -63,13 +63,13 @@ while [ -h "$PRG" ]; do
 done
 PRGDIR=`dirname "$PRG"`
 BASEDIR=`cd "$PRGDIR/.." >/dev/null; pwd`
-exec node "$BASEDIR/runtime-ts/cli/static-extract-ts.mjs" "$@"
+exec node "$BASEDIR/extractor-ts/cli/static-extract-ts.mjs" "$@"
 EOF
 
 chmod +x "$PACKAGE_DIR/install.sh" \
   "$PACKAGE_DIR/bin/static-extract-java" \
   "$PACKAGE_DIR/bin/static-extract-ts" \
-  "$PACKAGE_DIR/runtime-ts/cli/static-extract-ts.mjs" \
+  "$PACKAGE_DIR/extractor-ts/cli/static-extract-ts.mjs" \
   "$PACKAGE_DIR/skills/ser-author/scripts/generate_ser.mjs" \
   "$PACKAGE_DIR/skills/ser-author/scripts/run_static_extract.mjs"
 

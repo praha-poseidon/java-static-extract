@@ -1,14 +1,14 @@
-# Runtime CLI Contract
+# Extractor CLI Contract
 
-Each language runtime owns its own CLI. A Java CLI must not shell out to a
-TypeScript runtime, and a TypeScript CLI must not depend on a Java jar.
+Each language extractor owns its own CLI. A Java CLI must not shell out to a
+TypeScript extractor, and a TypeScript CLI must not depend on a Java jar.
 
 ## Naming
 
-Runtime CLIs use this shape:
+Extractor CLIs use this shape:
 
 ```text
-static-extract-<runtime>
+static-extract-<extractor>
 ```
 
 Examples:
@@ -21,7 +21,7 @@ static-extract-vue
 
 ## Commands
 
-All runtime CLIs should expose these commands:
+All extractor CLIs should expose these commands:
 
 ```text
 init
@@ -40,7 +40,7 @@ run
 
 ## Required Arguments
 
-Each runtime can choose runtime-specific input flags, but these concepts must
+Each extractor can choose extractor-specific input flags, but these concepts must
 exist:
 
 ```text
@@ -51,7 +51,7 @@ exist:
 --out            JSONL output file
 ```
 
-Runtime-specific examples:
+Extractor-specific examples:
 
 ```text
 static-extract-java --classes target/classes --dependency target/dependency
@@ -59,7 +59,7 @@ static-extract-ts --tsconfig tsconfig.json
 static-extract-vue --alias @=src
 ```
 
-The runtime-specific flags affect extraction accuracy, not the output contract.
+The extractor-specific flags affect extraction accuracy, not the output contract.
 
-Runtimes MAY keep older aliases such as `--rules` or `--file`, but
+Extractors MAY keep older aliases such as `--rules` or `--file`, but
 documentation and skills SHOULD prefer the shared names above.

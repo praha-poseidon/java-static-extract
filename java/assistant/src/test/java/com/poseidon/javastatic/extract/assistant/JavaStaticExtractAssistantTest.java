@@ -1,6 +1,6 @@
 package com.poseidon.javastatic.extract.assistant;
 
-import com.poseidon.javastatic.extract.runtime.ExtractedFact;
+import com.poseidon.javastatic.extract.extractor.ExtractedFact;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

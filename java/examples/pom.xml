@@ -13,13 +13,13 @@
 
   <artifactId>static-extract-examples-java</artifactId>
   <name>static-extract-examples-java</name>
-  <description>Example SER rules for the Java/JDT Static Extract runtime</description>
+  <description>Example SER rules for the Java/JDT Static Extract extractor</description>
   <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
       <groupId>com.poseidon</groupId>
-      <artifactId>static-extract-runtime-java-jdt</artifactId>
+      <artifactId>static-extract-extractor-java-jdt</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

@@ -1,7 +1,7 @@
 {
   "$schema": "../../../spec/schema/rule-manifest.schema.json",
   "name": "static-extract-ts-builtin",
-  "runtime": "ts",
+  "extractor": "ts",
   "version": "0.0.1",
   "rules": [
     "react/axios-api-call.ser",

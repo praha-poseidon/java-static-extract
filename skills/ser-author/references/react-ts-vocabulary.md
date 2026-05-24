@@ -1,12 +1,12 @@
 # React/TS Vocabulary
 
-Source of truth: `ts/runtime/vocabulary.md`.
+Source of truth: `ts/extractor/vocabulary.md`.
 
 Currently supported SER:
 
 Use generic JSX and call vocabulary first. Specific names such as `button`,
 `ActionButton`, `fetch`, `axios`, or `request` are selector values, not separate
-runtime features.
+extractor features.
 
 ```ser
 rule "React Button Text"

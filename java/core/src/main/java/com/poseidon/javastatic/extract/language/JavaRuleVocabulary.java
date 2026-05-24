@@ -3,7 +3,7 @@ package com.poseidon.javastatic.extract.language;
 import java.util.Set;
 
 /**
- * Built-in Java vocabulary currently implemented by the JDT runtime.
+ * Built-in Java vocabulary currently implemented by the JDT extractor.
  */
 public final class JavaRuleVocabulary implements RuleVocabulary {
 

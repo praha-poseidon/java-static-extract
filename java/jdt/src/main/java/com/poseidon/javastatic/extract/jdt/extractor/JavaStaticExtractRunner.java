@@ -1,4 +1,4 @@
-package com.poseidon.javastatic.extract.jdt.runtime;
+package com.poseidon.javastatic.extract.jdt.extractor;
 
 import com.poseidon.javastatic.extract.jdt.DefaultJdtStaticExtractEngine;
 import com.poseidon.javastatic.extract.jdt.StaticExtractResult;

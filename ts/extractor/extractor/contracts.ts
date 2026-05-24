@@ -1,4 +1,4 @@
-export interface RuntimeRunRequest {
+export interface ExtractorRunRequest {
   project?: string;
   sources: string[];
   ruleFiles: string[];
@@ -7,7 +7,7 @@ export interface RuntimeRunRequest {
   outputFile?: string;
 }
 
-export interface RuntimeRunResult {
+export interface ExtractorRunResult {
   resultCount: number;
   outputFile?: string;
   results: ExtractedFact[];

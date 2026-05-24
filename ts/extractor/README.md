@@ -1,6 +1,6 @@
-# Static Extract TypeScript Runtime
+# Static Extract TypeScript Extractor
 
-This module implements the TypeScript-family Static Extract runtime with
+This module implements the TypeScript-family Static Extract extractor with
 `ts-morph`.
 
 It owns `.ts`, `.tsx`, `.js`, and `.jsx` parsing, AST find/source/value
@@ -20,11 +20,12 @@ node cli/static-extract-ts.mjs run --project ./app --builtin --out facts.jsonl
 
 ```text
 cli/static-extract-ts.mjs    command line entry point
-runtime/rule-parser.mjs      SER subset parser used by this runtime
-runtime/ast-model.mjs        ts-morph SourceFile creation
-runtime/find-executor.mjs    find jsx/call/function/variable
-runtime/source-evaluator.mjs from/take evaluation
-runtime/value-tracer.mjs     syntax-only value tracing
-runtime/runtime.mjs          extraction orchestration
+extractor/rule-parser.mjs    SER subset parser used by this extractor
+extractor/ast-model.mjs      ts-morph SourceFile creation
+extractor/find-executor.mjs  find jsx/call/function/variable
+extractor/source-evaluator.mjs
+                             from/take evaluation
+extractor/value-tracer.mjs   syntax-only value tracing
+extractor/extractor.mjs      extraction orchestration
 rules/                       built-in TS/React SER rules
 ```

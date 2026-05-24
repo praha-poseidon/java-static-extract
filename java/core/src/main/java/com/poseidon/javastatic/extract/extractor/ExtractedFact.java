@@ -1,4 +1,4 @@
-package com.poseidon.javastatic.extract.runtime;
+package com.poseidon.javastatic.extract.extractor;
 
 import java.util.Map;
 

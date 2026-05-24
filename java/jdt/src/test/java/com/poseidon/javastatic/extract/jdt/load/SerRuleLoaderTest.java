@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SerRuleLoaderTest {
 
     @Test
-    void loadAllReturnsJavaRuntimeBuiltinRules() {
+    void loadAllReturnsJavaExtractorBuiltinRules() {
         List<StaticExtractRule> rules = new SerRuleLoader().loadAll();
 
         assertEquals(
@@ -25,7 +25,7 @@ class SerRuleLoaderTest {
     }
 
     @Test
-    void loadsJavaRuntimeBuiltinTraceRules() {
+    void loadsJavaExtractorBuiltinTraceRules() {
         List<StaticTraceRuleSet> rules = new SerRuleLoader().loadApplicationTraceRules();
 
         assertEquals(List.of("Spring Config Trace"), rules.stream().map(StaticTraceRuleSet::name).toList());

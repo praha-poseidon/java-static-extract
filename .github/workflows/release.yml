@@ -24,12 +24,12 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Test Java runtime
+      - name: Test Java extractor
         run: mvn -B test
 
-      - name: Test TS runtime
+      - name: Test TS extractor
         run: npm ci && npm test
-        working-directory: ts/runtime
+        working-directory: ts/extractor
 
       - name: Package release distribution
         run: scripts/package-release.sh "${GITHUB_REF_NAME#v}"

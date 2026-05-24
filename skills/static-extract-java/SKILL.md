@@ -27,7 +27,7 @@ Use `static-extract-java` as the execution engine. Do not ask the user to write 
    - Scheduled jobs
    - RPC clients and servers when visible in code
 5. Read `references/capabilities.md` before writing rules. Use these primitives to describe the code shapes you discover in the project.
-6. If target values may depend on runtime configuration, prepare an external-values JSON file. Read `references/external-values.md`.
+6. If target values may depend on extractor configuration, prepare an external-values JSON file. Read `references/external-values.md`.
 7. Write generated rules under:
    ```text
    /path/to/project/.ser/generated
@@ -110,7 +110,7 @@ When no result is found, say what was checked, include the most useful diagnose 
 
 ## External Values
 
-When trace blocks need runtime configuration, pass a JSON dictionary with `--external-values`:
+When trace blocks need extractor configuration, pass a JSON dictionary with `--external-values`:
 
 ```json
 {

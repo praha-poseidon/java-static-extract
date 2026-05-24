@@ -9,7 +9,7 @@ import { parseRule } from "./rule-parser.mjs";
 import { buildFields, evaluateLets, jsxAttribute, jsxTagName } from "./source-evaluator.mjs";
 import { referenceValue, traceValue } from "./value-tracer.mjs";
 
-const runtimeRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const extractorRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 export async function init(request) {
   const projectRoot = resolvePath(request.project);
@@ -20,12 +20,12 @@ export async function init(request) {
   await mkdir(generatedRulesDir, { recursive: true });
   await mkdir(rulesDir, { recursive: true });
   await mkdir(outputDir, { recursive: true });
-  return { status: "OK", runtime: "ts", projectRoot, workspaceDir, generatedRulesDir, rulesDir, outputDir };
+  return { status: "OK", extractor: "ts", projectRoot, workspaceDir, generatedRulesDir, rulesDir, outputDir };
 }
 
 export async function tryRules(request) {
   const report = await extract(request);
-  return { status: report.resultCount > 0 ? "MATCH" : "NO_MATCH", runtime: "ts", resultCount: report.resultCount, results: report.results };
+  return { status: report.resultCount > 0 ? "MATCH" : "NO_MATCH", extractor: "ts", resultCount: report.resultCount, results: report.results };
 }
 
 export async function diagnose(request) {
@@ -33,7 +33,7 @@ export async function diagnose(request) {
   const sourceFiles = await resolveSourceFiles(request.sources);
   return {
     status: report.resultCount > 0 ? "MATCH" : "NO_MATCH",
-    runtime: "ts",
+    extractor: "ts",
     resultCount: report.resultCount,
     results: report.results,
     sourceFacts: report.resultCount > 0 ? [] : await collectSourceFacts(sourceFiles, request.project)
@@ -91,8 +91,8 @@ async function resolveRuleFiles(request) {
     files.push(...await scanFiles(resolvePath(directory), [".ser"]));
   }
   if (request.builtinRules) {
-    const manifest = JSON.parse(await readFile(join(runtimeRoot, "rules/manifest.json"), "utf8"));
-    files.push(...manifest.rules.map((rule) => join(runtimeRoot, "rules", rule)));
+    const manifest = JSON.parse(await readFile(join(extractorRoot, "rules/manifest.json"), "utf8"));
+    files.push(...manifest.rules.map((rule) => join(extractorRoot, "rules", rule)));
   }
   return [...new Set(files)].sort();
 }

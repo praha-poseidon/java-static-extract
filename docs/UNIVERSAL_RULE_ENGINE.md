@@ -15,13 +15,13 @@ The goal is to provide:
 
 - A shared rule language skeleton.
 - Pluggable language vocabularies.
-- Runtime implementations for different source languages.
+- Extractor implementations for different source languages.
 - Rulesets for popular frameworks and project-specific conventions.
 - A stable extracted-record envelope that keeps rule-built fields intact.
 
 - 统一的规则语言骨架。
 - 可插拔的语言词汇。
-- 面向不同源码语言的 runtime 实现。
+- 面向不同源码语言的 extractor 实现。
 - 面向主流框架和项目私有约定的规则包。
 - 稳定的提取结果外壳，同时保持规则 `build` 字段不被改写。
 
@@ -31,9 +31,9 @@ The target shape is:
 
 ```text
 SER Spec
-  -> Java vocabulary + JDT runtime
-  -> TSX vocabulary + TypeScript runtime
-  -> Vue vocabulary + Vue runtime
+  -> Java vocabulary + JDT extractor
+  -> TSX vocabulary + TypeScript extractor
+  -> Vue vocabulary + Vue extractor
   -> Rulesets
   -> Extracted records
 ```
@@ -65,18 +65,18 @@ build
 normalize
 ```
 
-A runtime parser should understand the shared rule shape and preserve
-runtime-specific vocabulary. It should not need to know every source-language
+An extractor parser should understand the shared rule shape and preserve
+extractor-specific vocabulary. It should not need to know every source-language
 element globally.
 
-runtime parser 只需要理解共享规则结构并保留 runtime 专属词汇，不应该全局知道所有源码语言元素，比如 Java annotation、JSX prop 或 Vue slot。
+extractor parser 只需要理解共享规则结构并保留 extractor 专属词汇，不应该全局知道所有源码语言元素，比如 Java annotation、JSX prop 或 Vue slot。
 
 ## Vocabulary
 
-A vocabulary is the set of language or framework words that a runtime knows how
+A vocabulary is the set of language or framework words that an extractor knows how
 to interpret.
 
-词汇是 runtime 能解释的一组语言或框架相关名词和动作。
+词汇是 extractor 能解释的一组语言或框架相关名词和动作。
 
 Examples:
 
@@ -93,9 +93,9 @@ Vue vocabulary:
   component, template, directive, slot, event, binding, script, route, call
 ```
 
-The DSL skeleton is shared, but vocabularies are runtime-specific.
+The DSL skeleton is shared, but vocabularies are extractor-specific.
 
-DSL 骨架统一，但词汇由 runtime 提供。
+DSL 骨架统一，但词汇由 extractor 提供。
 
 Example Java rule:
 
@@ -142,34 +142,34 @@ build {
 
 In these examples, `rule`, `fact`, `find`, `let`, `from`, `take`, and `build`
 belong to the SER spec. `method`, `annotation`, `jsx`, `children`, and `prop`
-belong to runtime vocabularies.
+belong to extractor vocabularies.
 
-在这些示例中，`rule`、`fact`、`find`、`let`、`from`、`take`、`build` 属于 SER spec；`method`、`annotation`、`jsx`、`children`、`prop` 属于 runtime 词汇。
+在这些示例中，`rule`、`fact`、`find`、`let`、`from`、`take`、`build` 属于 SER spec；`method`、`annotation`、`jsx`、`children`、`prop` 属于 extractor 词汇。
 
-## Runtime
+## Extractor
 
-A runtime executes rules for one source language or source representation.
+An extractor executes rules for one source language or source representation.
 
-runtime 负责在某一种源码语言或源码表示上执行规则。
+extractor 负责在某一种源码语言或源码表示上执行规则。
 
-Initial runtime targets:
+Initial extractor targets:
 
-初始 runtime 目标：
+初始 extractor 目标：
 
 ```text
 java/jdt
   Java source through Eclipse JDT.
 
-ts/runtime
+ts/extractor
   TypeScript and TSX through the TypeScript compiler API or ts-morph.
 
-static-extract-runtime-vue
+static-extract-extractor-vue
   Vue single-file components through a Vue parser plus TypeScript support.
 ```
 
-Runtime responsibilities:
+Extractor responsibilities:
 
-runtime 职责：
+extractor 职责：
 
 - Parse source files or receive parsed source units.
 - Implement supported `find` kinds.
@@ -185,11 +185,11 @@ runtime 职责：
 - 在 `take value` 或等价语义取值时追踪值。
 - 当规则无法执行时返回诊断信息。
 
-The language-neutral `spec/` should not contain Java classes or runtime code.
-Each runtime implements the spec in its own language and validates its own
+The language-neutral `spec/` should not contain Java classes or extractor code.
+Each extractor implements the spec in its own language and validates its own
 vocabulary.
 
-语言无关的 `spec/` 不应该包含 Java class 或 runtime 代码。每个 runtime 用自己的语言实现 spec，并校验自己的词汇。
+语言无关的 `spec/` 不应该包含 Java class 或 extractor 代码。每个 extractor 用自己的语言实现 spec，并校验自己的词汇。
 
 ## Facts
 
@@ -221,10 +221,10 @@ The `fields` object is still defined entirely by the SER `build` block.
 
 每条提取结果应该包含稳定外壳和灵活的 `fields`。`fields` 仍然完全由 SER `build` 块定义。
 
-Language runtimes should expose this shape through the spec contract instead of
-inventing runtime-specific output envelopes.
+Language extractors should expose this shape through the spec contract instead of
+inventing extractor-specific output envelopes.
 
-各语言 runtime 应该通过 spec contract 暴露这个结构，而不是各自发明一套输出外壳。
+各语言 extractor 应该通过 spec contract 暴露这个结构，而不是各自发明一套输出外壳。
 
 ```json
 {
@@ -256,9 +256,9 @@ functions, object maps, i18n calls, generated clients, or wrapper APIs.
 
 前端代码经常把可见文案和接口路径藏在变量、函数、对象映射、i18n 调用、生成 client 或封装 API 后面。
 
-The first TSX runtime should support value tracing for:
+The first TSX extractor should support value tracing for:
 
-第一版 TSX runtime 应支持这些值追踪：
+第一版 TSX extractor 应支持这些值追踪：
 
 ```text
 string literals
@@ -325,7 +325,7 @@ Example `ruleset.yaml`:
 ```yaml
 id: frontend/react
 language: typescript
-runtime: tsx
+extractor: tsx
 facts:
   - ui_action
   - frontend_handler
@@ -407,22 +407,22 @@ Suggested order:
 建议顺序：
 
 1. Add `fact` to the DSL while preserving `endpoint`.
-2. Make element kinds and take kinds runtime-extensible where practical.
+2. Make element kinds and take kinds extractor-extensible where practical.
 3. Define the stable extracted-record envelope and JSONL output.
 4. Add ruleset metadata and CLI loading by `--ruleset`.
-5. Build a minimal TSX runtime for React button, event handler, and axios call extraction.
+5. Build a minimal TSX extractor for React button, event handler, and axios call extraction.
 6. Add frontend diagnostics for unresolved label, handler, and API path values.
 7. Add discovery for frontend components, request wrappers, and i18n calls.
-8. Expand official rulesets after the record envelope and runtime vocabulary stabilize.
+8. Expand official rulesets after the record envelope and extractor vocabulary stabilize.
 
 1. 给 DSL 增加 `fact`，同时保留 `endpoint` 兼容。
-2. 在可行范围内让 element kind 和 take kind 可由 runtime 扩展。
+2. 在可行范围内让 element kind 和 take kind 可由 extractor 扩展。
 3. 定义稳定的提取结果外壳和 JSONL 输出。
 4. 增加 ruleset 元数据和 CLI `--ruleset` 加载。
-5. 做最小 TSX runtime，支持 React Button、事件 handler、axios 调用提取。
+5. 做最小 TSX extractor，支持 React Button、事件 handler、axios 调用提取。
 6. 增加前端诊断，解释文案、handler、API path 无法解析的原因。
 7. 增加 discovery，发现前端组件、request 封装和 i18n 调用。
-8. 等提取结果外壳和 runtime vocabulary 稳定后，再扩展官方 rulesets。
+8. 等提取结果外壳和 extractor vocabulary 稳定后，再扩展官方 rulesets。
 
 ## Near-Term Minimal Loop
 

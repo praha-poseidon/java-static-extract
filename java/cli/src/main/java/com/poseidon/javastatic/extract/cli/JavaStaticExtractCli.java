@@ -23,7 +23,7 @@ import java.util.concurrent.Callable;
         name = "static-extract-java",
         mixinStandardHelpOptions = true,
         version = "0.0.1",
-        description = "Run Static Extract Java runtime SER rules.",
+        description = "Run Static Extract Java extractor SER rules.",
         subcommands = {
                 JavaStaticExtractCli.InitCommand.class,
                 JavaStaticExtractCli.TryCommand.class,

@@ -3,7 +3,7 @@ package com.poseidon.javastatic.extract.language;
 /**
  * User-facing SER language tokens.
  *
- * <p>These names are the small public vocabulary a rule author sees. Runtime
+ * <p>These names are the small public vocabulary a rule author sees. Extractor
  * concepts such as AST nodes or JDT binding names should not appear here.
  */
 public final class SerOperators {

@@ -9,7 +9,7 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>static-extract</name>
-  <description>Rule-based static fact extraction engine and language runtimes</description>
+  <description>Rule-based static fact extraction engine and language extractors</description>
 
   <properties>
     <java.version>21</java.version>
