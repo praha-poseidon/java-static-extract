@@ -18,6 +18,24 @@ node cli/static-extract-ts.mjs --help
 node cli/static-extract-ts.mjs run --project ./app --builtin --out facts.jsonl
 ```
 
+## Module API
+
+```js
+import { runStaticExtractTs } from "@static-extract/extractor-ts";
+
+const report = await runStaticExtractTs({
+  project: "/path/to/react-project",
+  source: "/path/to/react-project/src",
+  rule: "/path/to/react-project/.ser/generated/api.ser",
+  traceRule: "/path/to/react-project/.ser/generated/config.trace.ser",
+  externalValues: "/path/to/react-project/.ser/generated/external-values.json"
+});
+
+console.log(report.results);
+```
+
+Use `builtin: true` to load built-in TS/React rules instead of passing `rule`.
+
 ## Architecture
 
 ```text

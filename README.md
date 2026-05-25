@@ -203,6 +203,22 @@ static-extract-java
 static-extract-ts
 ```
 
+The TS extractor can also be used as a Node module:
+
+TS extractor 也可以作为 Node 模块使用：
+
+```js
+import { runStaticExtractTs } from "@static-extract/extractor-ts";
+
+const report = await runStaticExtractTs({
+  project: "/path/to/react-project",
+  source: "/path/to/react-project/src",
+  rule: "/path/to/react-project/.ser/generated/api.ser",
+  traceRule: "/path/to/react-project/.ser/generated/config.trace.ser",
+  externalValues: "/path/to/react-project/.ser/generated/external-values.json"
+});
+```
+
 Installed skills:
 
 安装后的 Skill：
@@ -251,6 +267,8 @@ static-extract-0.0.1/
   repo/
     Java CLI jars and dependencies
   extractor-ts/
+    index.mjs
+    index.d.ts
     cli/
     extractor/
     dist/
