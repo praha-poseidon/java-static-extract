@@ -235,11 +235,29 @@ function parseWhen(ctx: WhenDeclContext): TraceWhenModel {
   if (ctx.METHOD() && ctx.NAME()) {
     return { kind: "methodName", value: ctx.valueToken()?.getText() ?? "" };
   }
+  if (ctx.METHOD() && ctx.methodPattern()) {
+    const pattern = ctx.methodPattern()!.getText();
+    const lastDot = pattern.lastIndexOf(".");
+    return {
+      kind: "method",
+      owner: lastDot >= 0 ? pattern.slice(0, lastDot) : undefined,
+      name: lastDot >= 0 ? pattern.slice(lastDot + 1) : pattern
+    };
+  }
   if (ctx.FIELD() && ctx.NAME()) {
     return { kind: "fieldName", value: ctx.valueToken()?.getText() ?? "" };
   }
+  if (ctx.FIELD() && ctx.TYPE()) {
+    return { kind: "fieldType", value: ctx.qualifiedName()?.getText() ?? "" };
+  }
   if (ctx.PARAMETER() && ctx.NAME()) {
     return { kind: "parameterName", value: ctx.valueToken()?.getText() ?? "" };
+  }
+  if (ctx.PARAMETER() && ctx.TYPE()) {
+    return { kind: "parameterType", value: ctx.qualifiedName()?.getText() ?? "" };
+  }
+  if (ctx.ASSIGNMENT() && ctx.FIELD()) {
+    return { kind: "assignmentField", value: ctx.valueToken()?.getText() ?? "" };
   }
   return { kind: ctx.getText() };
 }

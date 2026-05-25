@@ -1,4 +1,4 @@
-import { Node } from "ts-morph";
+import { Node, SyntaxKind } from "ts-morph";
 import { resolveTrace } from "./trace-engine.mjs";
 
 export function traceValue(node, options = {}) {
@@ -22,7 +22,15 @@ export function traceValue(node, options = {}) {
   }
   if (Node.isCallExpression(node)) {
     const traced = resolveTrace(node, options);
-    return traced !== "" ? traced : `{${node.getText()}}`;
+    if (traced !== "") {
+      return traced;
+    }
+    const returned = traceCalledFunctionReturn(node, options);
+    return returned !== "" ? returned : `{${node.getText()}}`;
+  }
+  if (Node.isBinaryExpression(node) && node.getOperatorToken().getKind() === SyntaxKind.EqualsToken) {
+    const traced = resolveTrace(node, options);
+    return traced !== "" ? traced : traceValue(node.getRight(), options);
   }
   return node.getText() ? `{${node.getText()}}` : "";
 }
@@ -49,9 +57,94 @@ export function referenceValue(node) {
 function traceIdentifier(node, options) {
   const declaration = node.getDefinitions()[0]?.getDeclarationNode();
   if (declaration && Node.isVariableDeclaration(declaration)) {
-    return traceValue(declaration.getInitializer(), options);
+    const value = traceValue(declaration.getInitializer(), options);
+    if (value !== "") {
+      return value;
+    }
+    const assigned = traceAssignedValue(node, options);
+    if (assigned !== "") {
+      return assigned;
+    }
+    const traced = resolveTrace(declaration, options);
+    return traced !== "" ? traced : `{${node.getText()}}`;
+  }
+  if (declaration && Node.isParameterDeclaration(declaration)) {
+    const traced = resolveTrace(declaration, options);
+    return traced !== "" ? traced : `{${node.getText()}}`;
+  }
+  if (declaration && Node.isPropertyDeclaration(declaration)) {
+    const value = traceValue(declaration.getInitializer(), options);
+    if (value !== "") {
+      return value;
+    }
+    const traced = resolveTrace(declaration, options);
+    return traced !== "" ? traced : `{${node.getText()}}`;
   }
   return `{${node.getText()}}`;
+}
+
+function traceAssignedValue(node, options) {
+  const sourceFile = node.getSourceFile();
+  const name = node.getText();
+  const assignments = sourceFile.getDescendantsOfKind(SyntaxKind.BinaryExpression)
+    .filter((candidate) => candidate.getOperatorToken().getKind() === SyntaxKind.EqualsToken)
+    .filter((candidate) => candidate.getStart() < node.getStart())
+    .filter((candidate) => {
+      const left = candidate.getLeft();
+      if (Node.isIdentifier(left)) {
+        return left.getText() === name;
+      }
+      if (Node.isPropertyAccessExpression(left)) {
+        return left.getName() === name;
+      }
+      return false;
+    });
+  const assignment = assignments.at(-1);
+  if (!assignment) {
+    return "";
+  }
+  const traced = resolveTrace(assignment, options);
+  return traced !== "" ? traced : traceValue(assignment.getRight(), options);
+}
+
+function traceCalledFunctionReturn(node, options) {
+  const declaration = node.getExpression().getDefinitions?.()[0]?.getDeclarationNode();
+  const functionNode = callableFunctionNode(declaration);
+  if (!functionNode) {
+    return "";
+  }
+  const methodTrace = resolveTrace(functionNode, options);
+  if (methodTrace !== "") {
+    return methodTrace;
+  }
+  if (Node.isArrowFunction(functionNode) && !Node.isBlock(functionNode.getBody())) {
+    return traceValue(functionNode.getBody(), options);
+  }
+  const returnStatement = functionNode.getDescendantsOfKind(SyntaxKind.ReturnStatement)[0];
+  if (!returnStatement) {
+    return "";
+  }
+  const returnTrace = resolveTrace(returnStatement, options);
+  if (returnTrace !== "") {
+    return returnTrace;
+  }
+  return traceValue(returnStatement.getExpression(), options);
+}
+
+function callableFunctionNode(declaration) {
+  if (!declaration) {
+    return null;
+  }
+  if (Node.isFunctionDeclaration(declaration) || Node.isMethodDeclaration(declaration) || Node.isFunctionExpression(declaration) || Node.isArrowFunction(declaration)) {
+    return declaration;
+  }
+  if (Node.isVariableDeclaration(declaration)) {
+    const initializer = declaration.getInitializer();
+    if (initializer && (Node.isArrowFunction(initializer) || Node.isFunctionExpression(initializer))) {
+      return initializer;
+    }
+  }
+  return null;
 }
 
 function traceTemplate(node, options) {
@@ -67,11 +160,13 @@ function tracePropertyAccess(node, options) {
   const expression = node.getExpression();
   const name = node.getName();
   if (!Node.isIdentifier(expression)) {
-    return `{${node.getText()}}`;
+    const traced = resolveTrace(node, options);
+    return traced !== "" ? traced : `{${node.getText()}}`;
   }
   const declaration = expression.getDefinitions()[0]?.getDeclarationNode();
   if (!declaration || !Node.isVariableDeclaration(declaration)) {
-    return `{${node.getText()}}`;
+    const traced = resolveTrace(node, options);
+    return traced !== "" ? traced : `{${node.getText()}}`;
   }
   const initializer = declaration.getInitializer();
   if (!initializer || !Node.isObjectLiteralExpression(initializer)) {

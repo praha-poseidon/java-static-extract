@@ -35,3 +35,8 @@ extractor/value-tracer.mjs   syntax value tracing plus trace-ser continuation
 extractor/extractor.mjs      extraction orchestration
 rules/                       built-in TS/React SER rules
 ```
+
+The TS trace-ser engine supports the same target names as the shared SER
+grammar: `call`, `field`, `parameter`, `method`, `return`, and `assignment`.
+These targets are applied to TypeScript-family AST shapes and external value
+lookup through `--external-values`.

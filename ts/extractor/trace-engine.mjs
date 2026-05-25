@@ -1,4 +1,4 @@
-import { Node } from "ts-morph";
+import { Node, SyntaxKind } from "ts-morph";
 import { callName, callOwner } from "./find-executor.mjs";
 import { evaluateSource } from "./source-evaluator.mjs";
 
@@ -42,6 +42,57 @@ function traceTarget(node) {
       raw: node.getText()
     };
   }
+  if (Node.isParameterDeclaration(node)) {
+    return {
+      kind: "parameter",
+      node,
+      name: node.getName(),
+      type: node.getTypeNode()?.getText() ?? "",
+      raw: node.getText()
+    };
+  }
+  if (Node.isVariableDeclaration(node) || Node.isPropertyDeclaration(node)) {
+    return {
+      kind: "field",
+      node,
+      name: node.getName(),
+      type: node.getTypeNode()?.getText() ?? "",
+      raw: node.getText()
+    };
+  }
+  if (Node.isPropertyAccessExpression(node)) {
+    return {
+      kind: "field",
+      node,
+      name: node.getName(),
+      type: "",
+      raw: node.getText()
+    };
+  }
+  if (Node.isFunctionDeclaration(node) || Node.isMethodDeclaration(node) || Node.isArrowFunction(node) || Node.isFunctionExpression(node)) {
+    return {
+      kind: "method",
+      node,
+      name: functionName(node),
+      raw: node.getText()
+    };
+  }
+  if (Node.isReturnStatement(node)) {
+    return {
+      kind: "return",
+      node,
+      name: "",
+      raw: node.getText()
+    };
+  }
+  if (Node.isBinaryExpression(node) && node.getOperatorToken().getKind() === SyntaxKind.EqualsToken) {
+    return {
+      kind: "assignment",
+      node,
+      name: assignmentFieldName(node),
+      raw: node.getText()
+    };
+  }
   return null;
 }
 
@@ -56,6 +107,27 @@ function matchesWhen(conditions, target) {
     }
     if (condition.kind === "callOwner") {
       return condition.value === target.owner;
+    }
+    if (condition.kind === "fieldName") {
+      return condition.value === target.name;
+    }
+    if (condition.kind === "fieldType") {
+      return matchesType(condition.value, target.type);
+    }
+    if (condition.kind === "parameterName") {
+      return condition.value === target.name;
+    }
+    if (condition.kind === "parameterType") {
+      return matchesType(condition.value, target.type);
+    }
+    if (condition.kind === "method") {
+      return !condition.name || condition.name === target.name;
+    }
+    if (condition.kind === "methodName") {
+      return condition.value === target.name;
+    }
+    if (condition.kind === "assignmentField") {
+      return condition.value === target.name;
     }
     return true;
   });
@@ -100,4 +172,30 @@ function resolveExternalValue(fields, externalValues = {}) {
   }
   const value = namespaceValues[key];
   return Array.isArray(value) ? String(value[0] ?? "") : String(value ?? "");
+}
+
+function functionName(node) {
+  if (typeof node.getName === "function" && node.getName()) {
+    return node.getName();
+  }
+  const variable = node.getFirstAncestorByKind?.(SyntaxKind.VariableDeclaration);
+  return variable && typeof variable.getName === "function" ? variable.getName() : "";
+}
+
+function assignmentFieldName(node) {
+  const left = node.getLeft();
+  if (Node.isIdentifier(left)) {
+    return left.getText();
+  }
+  if (Node.isPropertyAccessExpression(left)) {
+    return left.getName();
+  }
+  if (Node.isElementAccessExpression(left)) {
+    return left.getArgumentExpression()?.getText().replace(/^["']|["']$/g, "") ?? "";
+  }
+  return left.getText();
+}
+
+function matchesType(expected, actual = "") {
+  return !expected || expected === actual || actual.endsWith(`.${expected}`);
 }

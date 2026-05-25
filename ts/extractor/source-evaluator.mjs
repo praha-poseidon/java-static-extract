@@ -42,8 +42,26 @@ export function evaluateSource(source, anchor, options = {}) {
   if (source.element === "call" && anchor.kind === "call") {
     return takeCallValue(anchor.node, source.take);
   }
+  if (source.element === "argument" && anchor.kind === "assignment") {
+    return takeAssignmentValue(anchor.node, source.take, options);
+  }
   if (source.element === "return" && anchor.kind === "function") {
     return takeReturnValue(anchor.node, source.take, options);
+  }
+  if (source.element === "return" && anchor.kind === "return") {
+    return takeReturnStatementValue(anchor.node, source.take, options);
+  }
+  if (source.element === "method" && anchor.kind === "method") {
+    return takeMethodValue(anchor.node, source.take);
+  }
+  if (source.element === "field" && anchor.kind === "field") {
+    return takeFieldValue(anchor.node, source.take, options);
+  }
+  if (source.element === "parameter" && anchor.kind === "parameter") {
+    return takeParameterValue(anchor.node, source.take);
+  }
+  if (source.element === "assignment" && anchor.kind === "assignment") {
+    return takeAssignmentValue(anchor.node, source.take, options);
   }
   if (source.element === "variable" && anchor.kind === "variable") {
     return takeVariableValue(anchor.node, source.take, options);
@@ -139,8 +157,75 @@ function takeCallValue(node, take) {
   return "";
 }
 
+function takeMethodValue(node, take) {
+  if (take === "name") {
+    return typeof node.getName === "function" ? node.getName() ?? "" : "";
+  }
+  if (take === "raw") {
+    return node.getText();
+  }
+  return "";
+}
+
+function takeFieldValue(node, take, options) {
+  if (take === "name") {
+    return node.getName();
+  }
+  if (take === "type") {
+    return node.getTypeNode()?.getText() ?? "";
+  }
+  if (take === "raw") {
+    return node.getText();
+  }
+  if (take === "value") {
+    return traceValue(node.getInitializer?.(), options);
+  }
+  return "";
+}
+
+function takeParameterValue(node, take) {
+  if (take === "name") {
+    return node.getName();
+  }
+  if (take === "type") {
+    return node.getTypeNode()?.getText() ?? "";
+  }
+  if (take === "raw") {
+    return node.getText();
+  }
+  return "";
+}
+
+function takeAssignmentValue(node, take, options) {
+  if (take === "name") {
+    const left = node.getLeft();
+    return Node.isPropertyAccessExpression(left) ? left.getName() : left.getText();
+  }
+  if (take === "raw") {
+    return node.getText();
+  }
+  if (take === "value") {
+    return traceValue(node.getRight(), options);
+  }
+  return "";
+}
+
 function takeReturnValue(node, take, options) {
   const expression = firstReturnExpression(node);
+  if (!expression) {
+    return "";
+  }
+  if (take === "raw") {
+    return expression.getText();
+  }
+  if (take === "value") {
+    return traceValue(expression, options);
+  }
+  return "";
+}
+
+function takeReturnStatementValue(node, take, options) {
+  const expression = node.getExpression();
   if (!expression) {
     return "";
   }

@@ -42,9 +42,10 @@ reuse SER rules, run them, and iterate.
    - SER syntax: `references/ser-cheatsheet.md`
    - TS/React: `references/react-ts-vocabulary.md`
 7. If target values may depend on extractor configuration, prepare an
-   external-values JSON file. Java/JDT has the fuller trace resolver surface.
-   TS supports trace-ser continuation for syntax-level call values and
-   external value lookup. Read `references/external-values.md`.
+   external-values JSON file. Java/JDT and TS both use trace-ser target names
+   `call`, `field`, `parameter`, `method`, `return`, and `assignment`; TS
+   applies them to syntax-level value tracing and external value lookup. Read
+   `references/external-values.md`.
 8. Write generated rules under:
    ```text
    /path/to/project/.ser/generated
