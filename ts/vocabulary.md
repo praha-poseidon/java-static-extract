@@ -59,14 +59,27 @@ from class take raw
 
 ## Value Tracing
 
-The first AST implementation supports syntax-only tracing for:
+The TypeScript extractor builds a `ts-morph` project for the selected sources.
+Value tracing supports:
 
 - string literals
 - no-substitution template literals
-- identifiers bound to local variable declarations
+- identifiers bound to local and imported variable declarations
 - template expressions
 - binary string concatenation with `+`
 - object property access for local object literals
+- assignment values
+- called function returns
+- trace-ser continuation for stuck `call`, `field`, `parameter`, `method`,
+  `return`, and `assignment` targets
+- external dictionary lookup through trace-ser `namespace` + `key`
 
-This extractor does not yet use the TypeScript type checker or cross-file symbol
-resolution.
+Basic cross-file tracing works when TypeScript can resolve the imported symbol.
+For example, `fetch(API)` can resolve `API` from `import { API } from "./config"`.
+
+Project sessions created through `createStaticExtractTsSession` reuse the same
+project AST across repeated rule runs.
+
+Limits still apply for dynamic `require`, runtime mutation, generated aliases
+that are not visible to the TypeScript project, and values that only exist at
+runtime unless they are supplied through external values.

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createStaticExtractTsSession, runStaticExtractTs, tryStaticExtractTs } from "../index.mjs";
 
@@ -40,6 +41,41 @@ const sessionReport = await session.run({
 assert.equal(sessionReport.resultCount, 1);
 assert.equal(sessionReport.results[0].fields.path, "/api/users");
 session.dispose();
+
+const crossFileProject = mkdtempSync(join(tmpdir(), "static-extract-ts-cross-file-"));
+mkdirSync(resolve(crossFileProject, "src"), { recursive: true });
+writeFileSync(resolve(crossFileProject, "src/config.ts"), "export const API = \"/api/cross-users\";\n", "utf8");
+writeFileSync(
+  resolve(crossFileProject, "src/user.ts"),
+  "import { API } from './config';\nexport function loadUsers() { return fetch(API); }\n",
+  "utf8"
+);
+writeFileSync(
+  resolve(crossFileProject, "rule.ser"),
+  [
+    "rule \"Cross File Fetch\"",
+    "fact frontend_api_call",
+    "",
+    "find call fetch",
+    "",
+    "let path =",
+    "  from argument[0] take value",
+    "",
+    "build {",
+    "  client: \"fetch\"",
+    "  path: path",
+    "}"
+  ].join("\n"),
+  "utf8"
+);
+
+const crossFileReport = await runStaticExtractTs({
+  project: crossFileProject,
+  source: resolve(crossFileProject, "src/user.ts"),
+  rule: resolve(crossFileProject, "rule.ser")
+});
+assert.equal(crossFileReport.resultCount, 1);
+assert.equal(crossFileReport.results[0].fields.path, "/api/cross-users");
 
 function findRepoRoot(start) {
   let current = start;

@@ -8,6 +8,10 @@ evaluation, built-in TS rules, and the `static-extract-ts` CLI. It implements
 the shared contracts under `spec/` directly in TypeScript-family JavaScript and
 does not depend on the Java core jar.
 
+The extractor builds a `ts-morph` project for the selected sources, so value
+tracing can follow basic cross-file imports when TypeScript can resolve the
+symbol.
+
 ## Commands
 
 ```bash
