@@ -40,7 +40,8 @@ export function createAstProject(projectRoot, filePaths) {
     models.set(absolutePath, {
       project,
       sourceFile,
-      sourceText: sourceFile.getFullText()
+      sourceText: sourceFile.getFullText(),
+      projectRoot: root
     });
   }
   return { project, root, models };

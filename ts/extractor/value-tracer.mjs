@@ -8,6 +8,12 @@ export function traceValue(node, options = {}) {
   if (Node.isStringLiteral(node) || Node.isNoSubstitutionTemplateLiteral(node)) {
     return node.getLiteralText();
   }
+  if (Node.isNumericLiteral(node)) {
+    return node.getText();
+  }
+  if ([SyntaxKind.TrueKeyword, SyntaxKind.FalseKeyword, SyntaxKind.NullKeyword].includes(node.getKind())) {
+    return node.getText();
+  }
   if (Node.isIdentifier(node)) {
     return traceIdentifier(node, options);
   }
@@ -19,6 +25,12 @@ export function traceValue(node, options = {}) {
   }
   if (Node.isPropertyAccessExpression(node)) {
     return tracePropertyAccess(node, options);
+  }
+  if (Node.isElementAccessExpression(node)) {
+    return traceElementAccess(node, options);
+  }
+  if (Node.isArrayLiteralExpression(node)) {
+    return node.getElements().map((element) => traceValue(element, options)).join(",");
   }
   if (Node.isCallExpression(node)) {
     const traced = resolveTrace(node, options);
@@ -55,7 +67,13 @@ export function referenceValue(node) {
 }
 
 function traceIdentifier(node, options) {
-  const declaration = node.getDefinitions()[0]?.getDeclarationNode();
+  const declaration = resolvedDeclaration(node);
+  if (declaration && Node.isParameterDeclaration(declaration)) {
+    const argument = options.parameterValues?.get(parameterKey(declaration)) ?? options.parameterValues?.get(declaration.getName());
+    if (argument) {
+      return traceValue(argument, { ...options, parameterValues: undefined });
+    }
+  }
   if (declaration && Node.isVariableDeclaration(declaration)) {
     const value = traceValue(declaration.getInitializer(), options);
     if (value !== "") {
@@ -78,6 +96,10 @@ function traceIdentifier(node, options) {
       return value;
     }
     const traced = resolveTrace(declaration, options);
+    return traced !== "" ? traced : `{${node.getText()}}`;
+  }
+  if (declaration && Node.isBindingElement(declaration)) {
+    const traced = traceBindingElement(declaration, options);
     return traced !== "" ? traced : `{${node.getText()}}`;
   }
   return `{${node.getText()}}`;
@@ -117,8 +139,10 @@ function traceCalledFunctionReturn(node, options) {
   if (methodTrace !== "") {
     return methodTrace;
   }
+  const parameterValues = functionParameterValues(functionNode, node.getArguments());
+  const nextOptions = parameterValues.size > 0 ? { ...options, parameterValues } : options;
   if (Node.isArrowFunction(functionNode) && !Node.isBlock(functionNode.getBody())) {
-    return traceValue(functionNode.getBody(), options);
+    return traceValue(functionNode.getBody(), nextOptions);
   }
   const returnStatement = functionNode.getDescendantsOfKind(SyntaxKind.ReturnStatement)[0];
   if (!returnStatement) {
@@ -128,7 +152,7 @@ function traceCalledFunctionReturn(node, options) {
   if (returnTrace !== "") {
     return returnTrace;
   }
-  return traceValue(returnStatement.getExpression(), options);
+  return traceValue(returnStatement.getExpression(), nextOptions);
 }
 
 function callableFunctionNode(declaration) {
@@ -163,7 +187,7 @@ function tracePropertyAccess(node, options) {
     const traced = resolveTrace(node, options);
     return traced !== "" ? traced : `{${node.getText()}}`;
   }
-  const declaration = expression.getDefinitions()[0]?.getDeclarationNode();
+  const declaration = resolvedDeclaration(expression);
   if (!declaration || !Node.isVariableDeclaration(declaration)) {
     const traced = resolveTrace(node, options);
     return traced !== "" ? traced : `{${node.getText()}}`;
@@ -178,4 +202,99 @@ function tracePropertyAccess(node, options) {
     }
   }
   return `{${node.getText()}}`;
+}
+
+function traceElementAccess(node, options) {
+  const expression = node.getExpression();
+  const argument = node.getArgumentExpression();
+  const key = argument ? traceElementKey(argument, options) : "";
+  if (!key) {
+    const traced = resolveTrace(node, options);
+    return traced !== "" ? traced : `{${node.getText()}}`;
+  }
+  const declaration = Node.isIdentifier(expression) ? resolvedDeclaration(expression) : null;
+  const initializer = declaration && Node.isVariableDeclaration(declaration) ? declaration.getInitializer() : expression;
+  if (Node.isArrayLiteralExpression(initializer) && /^\d+$/.test(key)) {
+    return traceValue(initializer.getElements()[Number(key)], options);
+  }
+  if (Node.isObjectLiteralExpression(initializer)) {
+    for (const property of initializer.getProperties()) {
+      if (Node.isPropertyAssignment(property) && property.getName().replace(/^['"]|['"]$/g, "") === key) {
+        return traceValue(property.getInitializer(), options);
+      }
+    }
+  }
+  const traced = resolveTrace(node, options);
+  return traced !== "" ? traced : `{${node.getText()}}`;
+}
+
+function traceElementKey(node, options) {
+  if (Node.isStringLiteral(node) || Node.isNoSubstitutionTemplateLiteral(node) || Node.isNumericLiteral(node)) {
+    return node.getLiteralText?.() ?? node.getText();
+  }
+  const traced = traceValue(node, options);
+  return traced.startsWith("{") ? "" : traced;
+}
+
+function traceBindingElement(node, options) {
+  const variable = node.getFirstAncestorByKind(SyntaxKind.VariableDeclaration);
+  const initializer = variable?.getInitializer();
+  if (!initializer) {
+    return "";
+  }
+  const arrayLiteral = resolveArrayLiteral(initializer);
+  if (arrayLiteral && Node.isArrayBindingPattern(node.getParent())) {
+    const index = node.getParent().getElements().indexOf(node);
+    return traceValue(arrayLiteral.getElements()[index], options);
+  }
+  const declaration = Node.isIdentifier(initializer) ? resolvedDeclaration(initializer) : null;
+  const objectLiteral = Node.isObjectLiteralExpression(initializer)
+    ? initializer
+    : declaration && Node.isVariableDeclaration(declaration) && Node.isObjectLiteralExpression(declaration.getInitializer())
+      ? declaration.getInitializer()
+      : null;
+  if (!objectLiteral) {
+    return "";
+  }
+  const propertyName = node.getPropertyNameNode()?.getText().replace(/^['"]|['"]$/g, "") ?? node.getName();
+  for (const property of objectLiteral.getProperties()) {
+    if (Node.isPropertyAssignment(property) && property.getName() === propertyName) {
+      return traceValue(property.getInitializer(), options);
+    }
+  }
+  return "";
+}
+
+function resolveArrayLiteral(node) {
+  if (Node.isArrayLiteralExpression(node)) {
+    return node;
+  }
+  const declaration = Node.isIdentifier(node) ? resolvedDeclaration(node) : null;
+  return declaration && Node.isVariableDeclaration(declaration) && Node.isArrayLiteralExpression(declaration.getInitializer())
+    ? declaration.getInitializer()
+    : null;
+}
+
+function resolvedDeclaration(node) {
+  const symbol = node.getSymbol?.();
+  const aliased = symbol?.getAliasedSymbol?.();
+  return aliased?.getDeclarations?.()[0] ?? node.getDefinitions?.()[0]?.getDeclarationNode();
+}
+
+function functionParameterValues(functionNode, args) {
+  const values = new Map();
+  const parameters = typeof functionNode.getParameters === "function" ? functionNode.getParameters() : [];
+  for (let index = 0; index < parameters.length; index += 1) {
+    const argument = args[index];
+    if (!argument) {
+      continue;
+    }
+    values.set(parameterKey(parameters[index]), argument);
+    values.set(parameters[index].getName(), argument);
+  }
+  return values;
+}
+
+function parameterKey(parameter) {
+  return `${parameter.getSourceFile().getFilePath()}#${parameter.getStart()}:${parameter.getName()}`;
 }

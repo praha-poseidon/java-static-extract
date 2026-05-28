@@ -4,7 +4,7 @@ import { dirname, extname, isAbsolute, join, relative, resolve, sep } from "node
 import { fileURLToPath } from "node:url";
 import { Node, SyntaxKind } from "ts-morph";
 import { createAstProject } from "./ast-model.mjs";
-import { callName, callOwner, findAnchors } from "./find-executor.mjs";
+import { callName, callOwner, findAnchors, matchesAnchorWhen } from "./find-executor.mjs";
 import { parseRule, parseTrace } from "./rule-parser.mjs";
 import { buildFields, evaluateLets, jsxAttribute, jsxTagName } from "./source-evaluator.mjs";
 import { referenceValue, traceValue } from "./value-tracer.mjs";
@@ -122,6 +122,9 @@ async function extractWithState(request, state) {
     }
     for (const rule of rules) {
       for (const anchor of findAnchors(rule, model)) {
+        if (!matchesAnchorWhen(anchor, rule.when ?? [])) {
+          continue;
+        }
         const values = evaluateLets(rule, anchor, traceOptions);
         results.push({
           rule: rule.name,
@@ -241,7 +244,9 @@ function collectSourceFactsFromState(sourceFiles, projectRoot, state) {
     facts.push(...functionFacts(model, sourceFile, projectRoot));
     facts.push(...variableFacts(model, sourceFile, projectRoot));
     facts.push(...importFacts(model, sourceFile, projectRoot));
+    facts.push(...exportFacts(model, sourceFile, projectRoot));
     facts.push(...classFacts(model, sourceFile, projectRoot));
+    facts.push(...decoratorFacts(model, sourceFile, projectRoot));
   }
   return facts;
 }
@@ -319,11 +324,30 @@ function importFacts(model, sourceFile, projectRoot) {
   }));
 }
 
+function exportFacts(model, sourceFile, projectRoot) {
+  return findAnchors({ find: { kind: "export", name: "*" } }, model).map((anchor) => ({
+    kind: "export",
+    name: anchor.name,
+    raw: anchor.raw,
+    ...locationFields(model, sourceFile, projectRoot, anchor)
+  }));
+}
+
 function classFacts(model, sourceFile, projectRoot) {
   return findAnchors({ find: { kind: "class", name: "*" } }, model).map((anchor) => ({
     kind: "class",
     name: anchor.name,
     extends: anchor.node.getExtends()?.getExpression().getText() ?? "",
+    raw: anchor.raw,
+    ...locationFields(model, sourceFile, projectRoot, anchor)
+  }));
+}
+
+function decoratorFacts(model, sourceFile, projectRoot) {
+  return findAnchors({ find: { kind: "decorator", name: "*" } }, model).map((anchor) => ({
+    kind: "decorator",
+    name: anchor.name,
+    value: traceValue(anchor.node.getArguments()[0]),
     raw: anchor.raw,
     ...locationFields(model, sourceFile, projectRoot, anchor)
   }));

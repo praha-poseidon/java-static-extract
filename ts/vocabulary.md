@@ -12,6 +12,14 @@ find function <name>
 find variable <name>
 find import <moduleSpecifier>
 find class <name>
+find method <name>
+find field <name>
+find parameter <name>
+find assignment <name>
+find return <name>
+find decorator <name>
+find file <fileNameOrStem>
+find export <name>
 ```
 
 Examples:
@@ -26,6 +34,34 @@ find function handleSave
 find variable API_PATH
 find import react
 find class UserPanel
+find method save
+find decorator Get
+find file route
+find export default
+```
+
+## Rule Conditions
+
+Extract rules can narrow anchors with generic `when` clauses:
+
+```ser
+find call get
+when call owner router
+
+find call request
+when call name request
+
+find method save
+when method name save
+
+find field url
+when field type string
+
+find parameter path
+when parameter name path
+
+find assignment url
+when assignment field url
 ```
 
 ## Supported Sources
@@ -40,10 +76,29 @@ from argument[0] take value
 from argument[0] take raw
 from call take name
 from call take owner
+from call take callee
 from call take method
 from call take raw
+from handler take reference
+from handler last take reference
+from file take path
+from file take name
+from file take dir
+from file take extension
+from decorator take name
+from decorator take value
+from decorator take attr(0)
 from return take value
 from return take raw
+from method take name
+from method take raw
+from field take name
+from field take type
+from field take value
+from parameter take name
+from parameter take type
+from assignment take name
+from assignment take value
 from variable take name
 from variable take value
 from variable take raw
@@ -55,7 +110,35 @@ from import take raw
 from class take name
 from class take extends
 from class take raw
+from export take name
+from export take value
+from export take module
+from export take kind
+from export take raw
 ```
+
+`let` supports source fallback and value mapping:
+
+```ser
+let method =
+  from variable take value
+  default post
+  map { get: GET post: POST }
+```
+
+`build` supports `concat(...)` and generic pipeline steps:
+
+```ser
+build {
+  path: concat(basePath, "/", methodPath) | normalize httpPath
+  method: rawMethod | map { get: GET post: POST }
+  key: raw | regex "\\$\\{([^}:]+)" group 1
+  pathWithoutQuery: raw | replace "\\?.*$" ""
+}
+```
+
+Built-in normalizers are generic value transforms: `trim`, `upper`, `lower`,
+`slash`, `httpPath`, and `routePath`.
 
 ## Value Tracing
 
@@ -68,8 +151,10 @@ Value tracing supports:
 - template expressions
 - binary string concatenation with `+`
 - object property access for local object literals
+- object destructuring from traced object literals
+- array element access and array destructuring from traced array literals
 - assignment values
-- called function returns
+- called function returns with simple argument-to-parameter substitution
 - trace-ser continuation for stuck `call`, `field`, `parameter`, `method`,
   `return`, and `assignment` targets
 - external dictionary lookup through trace-ser `namespace` + `key`

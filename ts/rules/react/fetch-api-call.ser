@@ -11,6 +11,6 @@ let path =
 
 build {
   client: "fetch"
-  method: method
+  method: method | normalize upper
   path: path
 }

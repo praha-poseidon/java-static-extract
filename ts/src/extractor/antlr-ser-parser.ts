@@ -12,6 +12,7 @@ import {
   BuildExprContext,
   FindDeclContext,
   LetDeclContext,
+  PipelineStepContext,
   SerParser,
   SourceExprContext,
   SourceLineContext,
@@ -23,17 +24,32 @@ type SourceSpec = {
   element: string;
   name?: string;
   index?: number;
+  on?: string;
   take: string;
 };
 
+type LetSpec = {
+  sources: SourceSpec[];
+  defaultValue?: string;
+  map: Record<string, string>;
+};
+
 type BuildValue = string | { ref: string };
+type ConcatBuildValue = { concat: Array<string | { ref: string }> };
+type PipelineStepModel =
+  | { op: "normalize"; name: string }
+  | { op: "regex"; pattern: string; group: number }
+  | { op: "replace"; pattern: string; replacement: string }
+  | { op: "map"; entries: Record<string, string> };
+type BuildSpec = { value: BuildValue | ConcatBuildValue; pipeline: PipelineStepModel[] };
 
 export type SerRuleModel = {
   name: string;
   factType: string;
   find: { kind: string; name: string };
-  lets: Record<string, SourceSpec[]>;
-  build: Record<string, BuildValue>;
+  when: TraceWhenModel[];
+  lets: Record<string, LetSpec>;
+  build: Record<string, BuildSpec>;
 };
 
 export type TraceRuleSetModel = {
@@ -44,8 +60,8 @@ export type TraceRuleSetModel = {
 export type TraceEntryModel = {
   target: string;
   when: TraceWhenModel[];
-  lets: Record<string, SourceSpec[]>;
-  build: Record<string, BuildValue>;
+  lets: Record<string, LetSpec>;
+  build: Record<string, BuildSpec>;
 };
 
 export type TraceWhenModel = {
@@ -64,6 +80,7 @@ export function parseRuleModel(source: string, file: string): SerRuleModel {
     name: unquote(tree.ruleDecl().STRING().getText()),
     factType: tree.ruleTargetDecl().factDecl()?.valueToken().getText() ?? "endpoint",
     find: parseFind(tree.findDecl()),
+    when: tree.whenDecl().map(parseWhen),
     lets: parseLets(tree.letDecl()),
     build: parseBuild(tree.buildDecl())
   };
@@ -133,10 +150,14 @@ function parseFind(ctx: FindDeclContext): { kind: string; name: string } {
   return { kind: "unknown", name: "*" };
 }
 
-function parseLets(contexts: LetDeclContext[]): Record<string, SourceSpec[]> {
-  const lets: Record<string, SourceSpec[]> = {};
+function parseLets(contexts: LetDeclContext[]): Record<string, LetSpec> {
+  const lets: Record<string, LetSpec> = {};
   for (const ctx of contexts) {
-    lets[text(ctx.nameItem())] = ctx.sourceLine().map(parseSourceLine);
+    lets[text(ctx.nameItem())] = {
+      sources: ctx.sourceLine().map(parseSourceLine),
+      ...(ctx.defaultLine()?.literal() ? { defaultValue: unquote(ctx.defaultLine()!.literal().getText()) } : {}),
+      map: parseMapEntries(ctx.mapBlock()?.mapEntry() ?? [])
+    };
   }
   return lets;
 }
@@ -186,25 +207,76 @@ function parseSource(ctx: SourceExprContext): Omit<SourceSpec, "take"> {
     return { element: "new", name: ctx.qualifiedName()?.getText() ?? "" };
   }
   if (ctx.ANNOTATION()) {
-    return { element: "annotation", name: ctx.annotationRef()?.getText() ?? "" };
+    return { element: "annotation", name: ctx.annotationRef()?.getText() ?? "", on: ctx.elementRef()?.getText() };
+  }
+  if (ctx.DECORATOR()) {
+    return {
+      element: "decorator",
+      name: ctx.decoratorRef()?.getText() ?? "",
+      on: ctx.elementRef()?.getText()
+    };
   }
   return { element: ctx.getText() };
 }
 
-function parseBuild(ctx: BuildDeclContext): Record<string, BuildValue> {
-  const build: Record<string, BuildValue> = {};
+function parseBuild(ctx: BuildDeclContext): Record<string, BuildSpec> {
+  const build: Record<string, BuildSpec> = {};
   for (const field of ctx.buildField()) {
     const name = field.buildFieldName().getText();
-    build[name] = parseBuildExpr(field.buildExpr());
+    build[name] = {
+      value: parseBuildExpr(field.buildExpr()),
+      pipeline: field.pipelineStep().map(parsePipelineStep)
+    };
   }
   return build;
 }
 
-function parseBuildExpr(ctx: BuildExprContext): BuildValue {
+function parseBuildExpr(ctx: BuildExprContext): BuildValue | ConcatBuildValue {
   if (ctx.STRING()) {
     return unquote(ctx.STRING()!.getText());
   }
+  if (ctx.CONCAT()) {
+    return {
+      concat: ctx.concatList()?.concatItem().map((item) => {
+        if (item.STRING()) {
+          return unquote(item.STRING()!.getText());
+        }
+        return { ref: item.nameItem()?.getText() ?? item.getText() };
+      }) ?? []
+    };
+  }
   return { ref: ctx.nameItem()?.getText() ?? ctx.getText() };
+}
+
+function parsePipelineStep(ctx: PipelineStepContext): PipelineStepModel {
+  if (ctx.NORMALIZE()) {
+    return { op: "normalize", name: ctx.IDENT()?.getText() ?? "" };
+  }
+  if (ctx.REGEX()) {
+    return {
+      op: "regex",
+      pattern: unquote(ctx.STRING(0)?.getText() ?? ""),
+      group: Number(ctx.INT()?.getText() ?? "0")
+    };
+  }
+  if (ctx.REPLACE()) {
+    return {
+      op: "replace",
+      pattern: unquote(ctx.STRING(0)?.getText() ?? ""),
+      replacement: unquote(ctx.STRING(1)?.getText() ?? "")
+    };
+  }
+  return { op: "map", entries: parseMapEntries(ctx.mapEntry()) };
+}
+
+function parseMapEntries(entries: Array<{ valueToken(i?: number): any }>): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const entry of entries) {
+    const key = entry.valueToken(0)?.getText() ?? "";
+    const value = entry.valueToken(1)?.getText() ?? "";
+    values[key] = value;
+  }
+  return values;
 }
 
 function parseTraceEntry(ctx: TraceEntryContext): TraceEntryModel {
@@ -272,7 +344,12 @@ function text(value: { getText(): string }): string {
 }
 
 function unquote(value: string): string {
-  return value.startsWith("\"") && value.endsWith("\"")
-    ? value.slice(1, -1).replace(/\\"/g, "\"")
-    : value;
+  if (!value.startsWith("\"") || !value.endsWith("\"")) {
+    return value;
+  }
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value.slice(1, -1).replace(/\\"/g, "\"").replace(/\\\\/g, "\\");
+  }
 }

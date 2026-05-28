@@ -30,6 +30,7 @@ import { PipelineStepContext } from "./SerParser.js";
 import { MethodPatternContext } from "./SerParser.js";
 import { QualifiedNameContext } from "./SerParser.js";
 import { AnnotationRefContext } from "./SerParser.js";
+import { DecoratorRefContext } from "./SerParser.js";
 import { ElementRefContext } from "./SerParser.js";
 import { IdentListContext } from "./SerParser.js";
 import { NameItemContext } from "./SerParser.js";
@@ -322,6 +323,16 @@ export class SerListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitAnnotationRef?: (ctx: AnnotationRefContext) => void;
+    /**
+     * Enter a parse tree produced by `SerParser.decoratorRef`.
+     * @param ctx the parse tree
+     */
+    enterDecoratorRef?: (ctx: DecoratorRefContext) => void;
+    /**
+     * Exit a parse tree produced by `SerParser.decoratorRef`.
+     * @param ctx the parse tree
+     */
+    exitDecoratorRef?: (ctx: DecoratorRefContext) => void;
     /**
      * Enter a parse tree produced by `SerParser.elementRef`.
      * @param ctx the parse tree

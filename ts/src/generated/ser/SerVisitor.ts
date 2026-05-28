@@ -30,6 +30,7 @@ import { PipelineStepContext } from "./SerParser.js";
 import { MethodPatternContext } from "./SerParser.js";
 import { QualifiedNameContext } from "./SerParser.js";
 import { AnnotationRefContext } from "./SerParser.js";
+import { DecoratorRefContext } from "./SerParser.js";
 import { ElementRefContext } from "./SerParser.js";
 import { IdentListContext } from "./SerParser.js";
 import { NameItemContext } from "./SerParser.js";
@@ -213,6 +214,12 @@ export class SerVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitAnnotationRef?: (ctx: AnnotationRefContext) => Result;
+    /**
+     * Visit a parse tree produced by `SerParser.decoratorRef`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitDecoratorRef?: (ctx: DecoratorRefContext) => Result;
     /**
      * Visit a parse tree produced by `SerParser.elementRef`.
      * @param ctx the parse tree

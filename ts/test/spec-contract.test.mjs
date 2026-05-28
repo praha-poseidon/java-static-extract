@@ -97,6 +97,10 @@ build {
   ], { encoding: "utf8" });
   assert.match(diagnoseReport, /"status": "NO_MATCH"/);
   assert.match(diagnoseReport, /"sourceFacts"/);
+  if (example.endsWith("decorator-route")) {
+    assert.match(diagnoseReport, /"kind": "decorator"/);
+    assert.match(diagnoseReport, /"kind": "export"/);
+  }
 
   const report = execFileSync("node", [
     resolve(root, "cli/static-extract-ts.mjs"),

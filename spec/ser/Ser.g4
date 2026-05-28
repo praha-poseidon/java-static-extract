@@ -1,7 +1,7 @@
 grammar Ser;
 
 ruleFile
-    : ruleDecl ruleTargetDecl findDecl letDecl* buildDecl EOF
+    : ruleDecl ruleTargetDecl findDecl whenDecl* letDecl* buildDecl EOF
     ;
 
 traceFile
@@ -49,8 +49,10 @@ sourceLine
 
 sourceExpr
     : ANNOTATION ON elementRef annotationRef
+    | DECORATOR ON elementRef decoratorRef
     | ARGUMENT LBRACK INT RBRACK
     | CALL
+    | DECORATOR
     | METHOD
     | CLASS
     | FIELD sourceName=nameItem?
@@ -164,6 +166,10 @@ annotationRef
     | AT STAR IDENT
     ;
 
+decoratorRef
+    : AT? IDENT
+    ;
+
 elementRef
     : CLASS
     | METHOD
@@ -190,6 +196,7 @@ nameItem
     | ASSIGNMENT
     | NEW
     | LITERAL
+    | DECORATOR
     | KEY
     | DEFAULT
     | OWNER
@@ -224,6 +231,7 @@ KEY: 'key';
 RESOLVE: 'resolve';
 
 ANNOTATION: 'annotation';
+DECORATOR: 'decorator';
 ARGUMENT: 'argument';
 METHOD: 'method';
 CLASS: 'class';

@@ -11,6 +11,6 @@ let path =
 
 build {
   client: "axios"
-  method: method
+  method: method | normalize upper
   path: path
 }

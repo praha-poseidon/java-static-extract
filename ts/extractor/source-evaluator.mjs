@@ -4,29 +4,97 @@ import { referenceValue, traceValue } from "./value-tracer.mjs";
 
 export function evaluateLets(rule, anchor, options = {}) {
   const values = {};
-  for (const [name, sources] of Object.entries(rule.lets)) {
-    for (const source of sources) {
+  for (const [name, spec] of Object.entries(rule.lets)) {
+    const letSpec = normalizeLetSpec(spec);
+    for (const source of letSpec.sources) {
       const value = evaluateSource(source, anchor, options);
       if (value !== "") {
-        values[name] = value;
+        values[name] = applyLetMap(value, letSpec.map);
         break;
       }
     }
     if (!Object.hasOwn(values, name)) {
-      values[name] = "";
+      values[name] = applyLetMap(letSpec.defaultValue ?? "", letSpec.map);
     }
   }
   return values;
 }
 
+function normalizeLetSpec(spec) {
+  return Array.isArray(spec)
+    ? { sources: spec, defaultValue: "", map: {} }
+    : { sources: spec?.sources ?? [], defaultValue: spec?.defaultValue ?? "", map: spec?.map ?? {} };
+}
+
+function applyLetMap(value, entries = {}) {
+  return Object.hasOwn(entries, value) ? entries[value] : value;
+}
+
 export function buildFields(rule, values) {
   const fields = {};
-  for (const [name, value] of Object.entries(rule.build)) {
-    fields[name] = typeof value === "object"
-      ? Object.hasOwn(values, value.ref) ? values[value.ref] : ""
-      : value;
+  for (const [name, spec] of Object.entries(rule.build)) {
+    const buildSpec = Object.hasOwn(spec ?? {}, "value") ? spec : { value: spec, pipeline: [] };
+    fields[name] = applyPipeline(evaluateBuildValue(buildSpec.value, values), buildSpec.pipeline ?? []);
   }
   return fields;
+}
+
+function evaluateBuildValue(value, values) {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (Array.isArray(value?.concat)) {
+    return value.concat.map((part) => typeof part === "string" ? part : values[part.ref] ?? "").join("");
+  }
+  return Object.hasOwn(values, value.ref) ? values[value.ref] : "";
+}
+
+function applyPipeline(input, pipeline) {
+  let value = String(input ?? "");
+  for (const step of pipeline) {
+    if (step.op === "normalize") {
+      value = normalizeValue(value, step.name);
+    } else if (step.op === "regex") {
+      const match = value.match(new RegExp(step.pattern));
+      value = match ? match[step.group] ?? "" : "";
+    } else if (step.op === "replace") {
+      value = value.replace(new RegExp(step.pattern, "g"), step.replacement);
+    } else if (step.op === "map") {
+      value = Object.hasOwn(step.entries ?? {}, value) ? step.entries[value] : value;
+    }
+  }
+  return value;
+}
+
+function normalizeValue(value, name) {
+  if (name === "trim") {
+    return value.trim();
+  }
+  if (name === "upper") {
+    return value.toUpperCase();
+  }
+  if (name === "lower") {
+    return value.toLowerCase();
+  }
+  if (name === "slash" || name === "httpPath" || name === "routePath") {
+    return normalizeSlashPath(value);
+  }
+  return value;
+}
+
+function normalizeSlashPath(value) {
+  let path = value.trim().replace(/^https?:\/\/[^/]+/i, "");
+  path = path.split("?")[0] ?? path;
+  path = path.replace(/\\/g, "/").replace(/\/+/g, "/");
+  path = path.replace(/:([A-Za-z_$][\w$]*)/g, "{param}");
+  path = path.replace(/\$\{[^}]+}/g, "{param}");
+  path = path.replace(/\{[^}/]+}/g, "{param}");
+  path = path.replace(/\[\.{3}[^\]]+]/g, "{param}");
+  path = path.replace(/\[[^\]]+]/g, "{param}");
+  if (path && !path.startsWith("/")) {
+    path = `/${path}`;
+  }
+  return path.length > 1 ? path.replace(/\/$/, "") : path;
 }
 
 export function evaluateSource(source, anchor, options = {}) {
@@ -41,6 +109,18 @@ export function evaluateSource(source, anchor, options = {}) {
   }
   if (source.element === "call" && anchor.kind === "call") {
     return takeCallValue(anchor.node, source.take);
+  }
+  if (source.element === "handler" && anchor.kind === "call") {
+    return takeHandlerValue(anchor.node, source.take, source.name);
+  }
+  if (source.element === "file" && anchor.kind === "file") {
+    return takeFileValue(anchor, source.take);
+  }
+  if ((source.element === "decorator" || source.element === "annotation") && source.on) {
+    return takeRelatedDecoratorValue(anchor.node, source.on, source.name, source.take, options);
+  }
+  if (source.element === "decorator" && anchor.kind === "decorator") {
+    return takeDecoratorValue(anchor.node, source.take, options);
   }
   if (source.element === "argument" && anchor.kind === "assignment") {
     return takeAssignmentValue(anchor.node, source.take, options);
@@ -72,7 +152,40 @@ export function evaluateSource(source, anchor, options = {}) {
   if (source.element === "class" && anchor.kind === "class") {
     return takeClassValue(anchor.node, source.take);
   }
+  if (source.element === "export" && anchor.kind === "export") {
+    return takeExportValue(anchor.node, source.take);
+  }
   return "";
+}
+
+function takeRelatedDecoratorValue(node, ownerKind, name, take, options) {
+  const owner = relatedOwner(node, ownerKind);
+  if (!owner || typeof owner.getDecorators !== "function") {
+    return "";
+  }
+  const expected = normalizeDecoratorName(name);
+  const decorator = owner.getDecorators().find((item) => !expected || item.getName() === expected);
+  return decorator ? takeDecoratorValue(decorator, take, options) : "";
+}
+
+function relatedOwner(node, ownerKind) {
+  if (ownerKind === "class") {
+    return Node.isClassDeclaration(node) ? node : node.getFirstAncestorByKind(SyntaxKind.ClassDeclaration);
+  }
+  if (ownerKind === "method") {
+    return Node.isMethodDeclaration(node) ? node : node.getFirstAncestorByKind(SyntaxKind.MethodDeclaration);
+  }
+  if (ownerKind === "field") {
+    return Node.isPropertyDeclaration(node) ? node : node.getFirstAncestorByKind(SyntaxKind.PropertyDeclaration);
+  }
+  if (ownerKind === "parameter") {
+    return Node.isParameterDeclaration(node) ? node : node.getFirstAncestorByKind(SyntaxKind.Parameter);
+  }
+  return null;
+}
+
+function normalizeDecoratorName(name = "") {
+  return name.replace(/^@/, "").replace(/^\*/, "");
 }
 
 function takeJsxValue(node, take, options) {
@@ -150,11 +263,80 @@ function takeCallValue(node, take) {
   if (take === "raw") {
     return node.getText();
   }
+  if (take === "callee") {
+    return node.getExpression().getText();
+  }
   if (take === "method") {
-    const name = callName(node);
-    return ["get", "post", "put", "patch", "delete"].includes(name.toLowerCase()) ? name.toUpperCase() : name;
+    return callName(node);
   }
   return "";
+}
+
+function takeHandlerValue(node, take, selector) {
+  const args = node.getArguments();
+  const arg = selector === "last"
+    ? lastFunctionLikeArgument(args)
+    : args[Number(selector ?? args.length - 1)] ?? lastFunctionLikeArgument(args);
+  if (!arg) {
+    return "";
+  }
+  if (take === "raw") {
+    return arg.getText();
+  }
+  if (take === "name" || take === "reference" || take === "value") {
+    return referenceValue(arg);
+  }
+  return "";
+}
+
+function takeFileValue(anchor, take) {
+  const path = anchor.name ?? anchor.filePath ?? "";
+  if (take === "path" || take === "value" || take === "raw") {
+    return path;
+  }
+  if (take === "name") {
+    return path.split("/").at(-1) ?? path;
+  }
+  if (take === "dir") {
+    return path.split("/").slice(0, -1).join("/");
+  }
+  if (take === "extension") {
+    const name = path.split("/").at(-1) ?? "";
+    const index = name.indexOf(".");
+    return index >= 0 ? name.slice(index) : "";
+  }
+  return "";
+}
+
+function takeDecoratorValue(node, take, options) {
+  if (take === "name") {
+    return node.getName();
+  }
+  if (take === "raw") {
+    return node.getText();
+  }
+  const args = node.getArguments();
+  const first = args[0];
+  if (take === "value") {
+    return first ? traceValue(first, options) : "";
+  }
+  const attr = take.match(/^attr\((.+)\)$/);
+  if (attr) {
+    const index = Number(attr[1]);
+    const argument = Number.isFinite(index) ? args[index] : first;
+    return argument ? traceValue(argument, options) : "";
+  }
+  return "";
+}
+
+function lastFunctionLikeArgument(args) {
+  for (let index = args.length - 1; index >= 0; index -= 1) {
+    const arg = args[index];
+    if (Node.isIdentifier(arg) || Node.isPropertyAccessExpression(arg) || Node.isArrowFunction(arg) || Node.isFunctionExpression(arg) || Node.isCallExpression(arg)) {
+      return arg;
+    }
+  }
+  return null;
 }
 
 function takeMethodValue(node, take) {
@@ -279,6 +461,38 @@ function takeClassValue(node, take) {
   }
   if (take === "raw") {
     return node.getText();
+  }
+  return "";
+}
+
+function takeExportValue(node, take) {
+  if (take === "raw") {
+    return node.getText();
+  }
+  if (Node.isExportDeclaration(node)) {
+    if (take === "module" || take === "value") {
+      return node.getModuleSpecifierValue() ?? "";
+    }
+    if (take === "name") {
+      return node.getNamedExports().map((item) => item.getName()).join(",");
+    }
+  }
+  if (take === "name" || take === "value") {
+    return typeof node.getName === "function" ? node.getName() ?? "default" : "default";
+  }
+  if (take === "kind" || take === "type") {
+    if (Node.isFunctionDeclaration(node) || Node.isFunctionExpression(node) || Node.isArrowFunction(node)) {
+      return "function";
+    }
+    if (Node.isClassDeclaration(node)) {
+      return "class";
+    }
+    if (Node.isVariableDeclaration(node)) {
+      return "variable";
+    }
+    if (Node.isExportDeclaration(node)) {
+      return "reexport";
+    }
   }
   return "";
 }

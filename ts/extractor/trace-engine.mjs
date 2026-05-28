@@ -135,29 +135,97 @@ function matchesWhen(conditions, target) {
 
 function evaluateTraceLets(entry, target, options) {
   const values = {};
-  for (const [name, sources] of Object.entries(entry.lets ?? {})) {
-    for (const source of sources) {
+  for (const [name, spec] of Object.entries(entry.lets ?? {})) {
+    const letSpec = normalizeLetSpec(spec);
+    for (const source of letSpec.sources) {
       const value = evaluateSource(source, target, options);
       if (value !== "") {
-        values[name] = value;
+        values[name] = applyLetMap(value, letSpec.map);
         break;
       }
     }
     if (!Object.hasOwn(values, name)) {
-      values[name] = "";
+      values[name] = applyLetMap(letSpec.defaultValue ?? "", letSpec.map);
     }
   }
   return values;
 }
 
+function normalizeLetSpec(spec) {
+  return Array.isArray(spec)
+    ? { sources: spec, defaultValue: "", map: {} }
+    : { sources: spec?.sources ?? [], defaultValue: spec?.defaultValue ?? "", map: spec?.map ?? {} };
+}
+
+function applyLetMap(value, entries = {}) {
+  return Object.hasOwn(entries, value) ? entries[value] : value;
+}
+
 function buildTraceFields(entry, values) {
   const fields = {};
-  for (const [name, value] of Object.entries(entry.build ?? {})) {
-    fields[name] = typeof value === "object"
-      ? Object.hasOwn(values, value.ref) ? values[value.ref] : ""
-      : value;
+  for (const [name, spec] of Object.entries(entry.build ?? {})) {
+    const buildSpec = Object.hasOwn(spec ?? {}, "value") ? spec : { value: spec, pipeline: [] };
+    fields[name] = applyPipeline(evaluateBuildValue(buildSpec.value, values), buildSpec.pipeline ?? []);
   }
   return fields;
+}
+
+function evaluateBuildValue(value, values) {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (Array.isArray(value?.concat)) {
+    return value.concat.map((part) => typeof part === "string" ? part : values[part.ref] ?? "").join("");
+  }
+  return Object.hasOwn(values, value.ref) ? values[value.ref] : "";
+}
+
+function applyPipeline(input, pipeline) {
+  let value = String(input ?? "");
+  for (const step of pipeline) {
+    if (step.op === "normalize") {
+      value = normalizeValue(value, step.name);
+    } else if (step.op === "regex") {
+      const match = value.match(new RegExp(step.pattern));
+      value = match ? match[step.group] ?? "" : "";
+    } else if (step.op === "replace") {
+      value = value.replace(new RegExp(step.pattern, "g"), step.replacement);
+    } else if (step.op === "map") {
+      value = Object.hasOwn(step.entries ?? {}, value) ? step.entries[value] : value;
+    }
+  }
+  return value;
+}
+
+function normalizeValue(value, name) {
+  if (name === "trim") {
+    return value.trim();
+  }
+  if (name === "upper") {
+    return value.toUpperCase();
+  }
+  if (name === "lower") {
+    return value.toLowerCase();
+  }
+  if (name === "slash" || name === "httpPath" || name === "routePath") {
+    return normalizeSlashPath(value);
+  }
+  return value;
+}
+
+function normalizeSlashPath(value) {
+  let path = value.trim().replace(/^https?:\/\/[^/]+/i, "");
+  path = path.split("?")[0] ?? path;
+  path = path.replace(/\\/g, "/").replace(/\/+/g, "/");
+  path = path.replace(/:([A-Za-z_$][\w$]*)/g, "{param}");
+  path = path.replace(/\$\{[^}]+}/g, "{param}");
+  path = path.replace(/\{[^}/]+}/g, "{param}");
+  path = path.replace(/\[\.{3}[^\]]+]/g, "{param}");
+  path = path.replace(/\[[^\]]+]/g, "{param}");
+  if (path && !path.startsWith("/")) {
+    path = `/${path}`;
+  }
+  return path.length > 1 ? path.replace(/\/$/, "") : path;
 }
 
 function resolveExternalValue(fields, externalValues = {}) {

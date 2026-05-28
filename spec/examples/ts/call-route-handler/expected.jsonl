@@ -1,0 +1,1 @@
+{"rule":"TS Call Route Handler","factType":"ts_call_route","classifiers":{},"fields":{"method":"PATCH","path":"/users/:id","handler":"updateUser"},"projectFilePath":"input/routes.ts","absoluteFilePath":"${EXAMPLE_DIR}/input/routes.ts","startLine":16,"endLine":16,"enclosingSymbol":null}
